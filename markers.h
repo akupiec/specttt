@@ -16,7 +16,7 @@ public:
     QString note(){return _note;}
 
     void setOffset(int offset){_fileOffset = offset;}
-    int offset()(){return _fileOffset;}
+    int offset(){return _fileOffset;}
 
 private:
     int _fileOffset;

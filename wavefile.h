@@ -1,12 +1,19 @@
 #ifndef WAVEFILE_H
 #define WAVEFILE_H
 
+#include <QFile>
+
 #include "markers.h"
+
 class WaveFile : public QFile
 {
 public:
-    //reading Header
+    // Constructors
     WaveFile();
+    WaveFile(QObject *parent);
+    WaveFile(const QString &name);
+    WaveFile(const QString &name, QObject *parent);
+    ~WaveFile();
     //Reading Samples
     quint32 readData(double *buffer, int bufferSize, int offSet, int channelId = 0);
     int frequency();
