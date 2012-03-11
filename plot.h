@@ -12,7 +12,9 @@ class Plot : public QWidget
 {
     Q_OBJECT
 public:
+
     explicit Plot(QWidget *parent = 0);
+    ~Plot();
 
     //Reading File / creating WaveFile object
     bool openFile(QString filePath);
