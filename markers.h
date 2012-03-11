@@ -5,7 +5,7 @@
 class Markers
 {
 public:
-    Markers(int fileOffset, QString label,QString note);
+    Markers(quint32 fileOffset, QString label,QString note);
     Markers();
     void addMarker(int fileOffset, QString label,QString note);
 
@@ -15,11 +15,11 @@ public:
     void setNote(QString note){_note = note;}
     QString note(){return _note;}
 
-    void setOffset(int offset){_fileOffset = offset;}
-    int offset(){return _fileOffset;}
+    void setOffset(quint32 offset){_fileOffset = offset;}
+    quint32 offset(){return _fileOffset;}
 
 private:
-    int _fileOffset;
+    quint32 _fileOffset;
     QString _label;
     QString _note;
 };

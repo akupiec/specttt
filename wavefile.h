@@ -2,41 +2,53 @@
 #define WAVEFILE_H
 
 #include <QFile>
+#include <QVector>
 
 #include "markers.h"
 
 class WaveFile : public QFile
 {
+    Q_OBJECT
+
 public:
     // Constructors
-    WaveFile();
-    WaveFile(QObject *parent);
-    WaveFile(const QString &name);
-    WaveFile(const QString &name, QObject *parent);
-    ~WaveFile();
+    WaveFile(const QString& name);
     //Reading Samples
-    quint32 readData(double *buffer, int bufferSize, int offSet, int channelId = 0);
-    int frequency();
-    //Reading Markers form cue chunk
-    quint32 readMarkers(QVector<Markers> *list);
-    //Returning number of samples in file
-    int samples();
-    //Returning number of channels
-    int channels();
-    //Returning time length of file
-    double time();
+    qint64 readData(double *buffer, int bufferSize, int channelId);
+    qint64 readData(double *buffer, int bufferSize, qint64 offset, int channelId);
     //Returning frequency
+    int frequency() const { return file.header.wave.sampleRate * 0.5; }
+    //Reading Markers form cue chunk
+    qint64 readMarkers(QVector<Markers> *marker);
+    //Returning number of samples in file
+    int samples() const {return file.header.data.descriptor.size/(file.header.wave.bitsPerSample/8) / file.header.wave.numChannels; }
+    //Returning number of channels
+    int channels() const {return file.header.wave.numChannels;}
+    //Returning time length of file
+    double time() const {return (double)file.header.data.descriptor.size / file.header.wave.byteRate; }
+
+    // Return the END of data chunk position in the file
+    qint64 posDataEnd() const { return dataOffset + file.header.data.descriptor.size; }
+    //Return the BEGINING of data chunk position in the file
+    qint64 posDataBeg() const {return dataOffset;}
+
+//    // virtual methods interided from QFile
+//    virtual bool atEnd() const { return QFile::atEnd(); }
+//    virtual void close() { QFile::close(); }
+//    virtual bool isSequential() const { return QFile::isSequential(); }
+//    virtual qint64 pos() const { return QFile::pos(); }
+//    virtual bool seek(qint64 offset);
+//    virtual qint64 size() const { return QFile::size(); }
+
 private:
+
     //Reading headers
-    qint32 readHeader();
+    qint64 readHeader();
 
     //Wave File structur
     struct File
     {
-        static const int headerLength = sizeof(CombinedHeader);
-        static const int chunkLength = sizeof(Chunk);
-        static const int cuePointLength = sizeof(CuePoint);
-
+        bool isFirstSample;
         struct Chunk
         {
             char        id[4];
@@ -57,14 +69,18 @@ private:
             quint16     blockAlign;
             quint16     bitsPerSample;
         };
-        struct DATAHeader : Chunk {} ;
+
+        struct DATAHeader
+        {
+            Chunk       descriptor;
+        };
 
         struct CombinedHeader
         {
             RIFFHeader  riff;
             WAVEHeader  wave;
             DATAHeader  data;
-        };
+        }header;
 
         //cue chunk section
         struct CuePoint
@@ -81,7 +97,7 @@ private:
             Chunk       descriptor;
             quint32     numCuePoints;
             QVector<CuePoint>   list;
-        };
+        }cue;
 
         struct DataListChunk // "list"
         {
@@ -110,8 +126,13 @@ private:
         };
 
         struct NoteChunk : LabelChunk {}; // "note"
-    };
 
+        static const int headerLength = sizeof(CombinedHeader);
+        static const int chunkLength = sizeof(Chunk);
+        static const int cuePointLength = sizeof(CuePoint);
+
+    }file;    
+    qint64 dataOffset; // data chunk position offset in the file
 };
 
 #endif // WAVEFILE_H
