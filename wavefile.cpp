@@ -165,8 +165,8 @@ qint64 WaveFile::readMarkers(QVector<Markers> *marker)
                 File::LabeledTextChunk ltxt;
                 result += read(reinterpret_cast<char *>(&ltxt),sizeof(ltxt)-sizeof(ltxt.text));
                 ltxt.text.clear();
-                quint32 sizeOfText = temp.size - (quint32)sizeof(ltxt) + (quint32)sizeof(ltxt.text); // size of text stored in chunk
-                if (sizeOfText != 0)
+                int sizeOfText = temp.size - sizeof(ltxt) + sizeof(ltxt.text); // size of text stored in chunk
+                if (sizeOfText > 0)
                 {
                     ltxt.text.reserve(sizeOfText); // reserving nessesery size for text
                     char *tempChar = new char[sizeOfText]; //templorary char table for text
@@ -182,8 +182,8 @@ qint64 WaveFile::readMarkers(QVector<Markers> *marker)
                 File::LabelChunk label;
                 result += read(reinterpret_cast<char *>(&label.cuePointID),sizeof(label.cuePointID));
                 label.text.clear();
-                quint32 sizeOfText = temp.size - (quint32)sizeof(label) + (quint32)sizeof(label.text); // size of text stored in chunk
-                if (sizeOfText != 0)
+                int sizeOfText = temp.size - sizeof(label) + sizeof(label.text); // size of text stored in chunk
+                if (sizeOfText > 0)
                 {
                     label.text.reserve(sizeOfText);
                     char *tempChar = new char[sizeOfText];
@@ -214,18 +214,18 @@ qint64 WaveFile::readMarkers(QVector<Markers> *marker)
         }
         // setting parameters to Markers QVector
         marker->clear();
-        for(int i=0; i<file.cue.numCuePoints;i++)
-        {
-            //setting text
-            QString temp = "";
-            if (!listLtxt_.isEmpty())
-                temp += listLtxt_[i].text+ "\n";
-            if (!listLabels_.isEmpty())
-                temp += listLabels_[i].text+ "\n";
-            if (!listNotes_.isEmpty())
-                temp += listNotes_[i].text + "\n";
-            marker->append(Markers(file.cue.list[i].sampleOffset,listLtxt_[i].text,listLabels_[i].text));
-        }
+//        for(int i=0; i<file.cue.numCuePoints;i++)
+//        {
+//            //setting text
+//            QString temp = "";
+//            if (!listLtxt_.isEmpty())
+//                temp += listLtxt_[i].text+ "\n";
+//            if (!listLabels_.isEmpty())
+//                temp += listLabels_[i].text+ "\n";
+//            if (!listNotes_.isEmpty())
+//                temp += listNotes_[i].text + "\n";
+//            marker->append(Markers(file.cue.list[i].sampleOffset,listLtxt_[i].text,listLabels_[i].text));
+//        }
         return result; //and of file, returning
     }
     else //at EOF

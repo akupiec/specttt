@@ -131,7 +131,7 @@ private:
         static const int chunkLength = sizeof(Chunk);
         static const int cuePointLength = sizeof(CuePoint);
 
-    }file;    
+    }file;
     qint64 dataOffset; // data chunk position offset in the file
 };
 

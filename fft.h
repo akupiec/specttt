@@ -14,7 +14,7 @@ namespace FFT {
 
     class FFT {
     public:
-        FFT(uint16 bufferSize = 512, Window windowType = FFT::Hann);
+        FFT(uint16 bufferSize = 512, Window windowType = Hann);
         void countFFT(double* array);
         void makeWindow(double* array);
 
@@ -22,7 +22,7 @@ namespace FFT {
         uint16 bufferSize() const { return bufferFFT; }
         void setBufferSize(uint16);
         Window windowType() const { return windowFFT; }
-        void setWindowType(FFT::Window);
+        void setWindowType(Window);
 
     private:
         uint16 bufferFFT;
