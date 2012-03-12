@@ -2,12 +2,14 @@
 #define PLOT_H
 
 #include <QWidget>
+#include <QTemporaryFile>
+#include <QDir>
 #include "wavefile.h"
 #include "fft.h"
 #include "markers.h"
 
 //klasa jest odpowiedzialna za koordynacje danych miêdzy wavefile a fft
-//jest to klasa odpowiedzialna za rysowanie wykresu*   /////         ja by to i tak wywali³ o osobnej ³atwiej bêdzie nawigowaæ danymi nie pogubimy sie co dlaczego i gdzie
+//jest to klasa odpowiedzialna za rysowanie wykresu*   ///// ja by to i tak wywali³ o osobnej ³atwiej bêdzie nawigowaæ danymi nie pogubimy sie co dlaczego i gdzie
 class Plot : public QWidget
 {
     Q_OBJECT
@@ -36,6 +38,8 @@ private:
     WaveFile *file;
     // markers list object
     QVector<Markers> markerList;
+    // plot data temporary file
+    QTemporaryFile tempFile;
 };
 
 #endif // PLOT_H
