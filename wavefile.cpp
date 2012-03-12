@@ -156,16 +156,17 @@ qint64 WaveFile::readMarkers(QVector<Markers> *marker)
             //reading 1 byte loop until first byte of id is not "/0"
             do
                 result += read(reinterpret_cast<char *>(&temp),1);
-            while(temp.id[0] == 0);
+            while(temp.id[0] == 0 || temp.id[0] == 20);
             // reading rest of chunk
             seek(pos()-1); // withdrawing read positnion by 1 byte
             result += read(reinterpret_cast<char *>(&temp),sizeof(temp));
             if (memcmp(temp.id,"ltxt",4) == 0)
             {
                 File::LabeledTextChunk ltxt;
-                result += read(reinterpret_cast<char *>(&ltxt),sizeof(ltxt)-sizeof(ltxt.text));
+                result += read(reinterpret_cast<char *>(&ltxt),20);
+                qDebug() << sizeof(ltxt)-sizeof(ltxt.text) -8 << "="<< sizeof(ltxt)<<"-"<<sizeof(ltxt.text);
                 ltxt.text.clear();
-                int sizeOfText = temp.size - sizeof(ltxt) + sizeof(ltxt.text); // size of text stored in chunk
+                int sizeOfText = temp.size-28; // size of text stored in chunk
                 if (sizeOfText > 0)
                 {
                     ltxt.text.reserve(sizeOfText); // reserving nessesery size for text
@@ -180,9 +181,9 @@ qint64 WaveFile::readMarkers(QVector<Markers> *marker)
             else if (memcmp(temp.id,"labl",4) == 0)
             {
                 File::LabelChunk label;
-                result += read(reinterpret_cast<char *>(&label.cuePointID),sizeof(label.cuePointID));
+                result += read(reinterpret_cast<char *>(&label.cuePointID),4);
                 label.text.clear();
-                int sizeOfText = temp.size - sizeof(label) + sizeof(label.text); // size of text stored in chunk
+                int sizeOfText = temp.size - 4; // size of text stored in chunk
                 if (sizeOfText > 0)
                 {
                     label.text.reserve(sizeOfText);
@@ -197,9 +198,9 @@ qint64 WaveFile::readMarkers(QVector<Markers> *marker)
             else if (memcmp(temp.id,"note",4) == 0)
             {
                 File::NoteChunk note;
-                result += read(reinterpret_cast<char *>(&note.cuePointID),sizeof(note.cuePointID));
+                result += read(reinterpret_cast<char *>(&note.cuePointID),4);
                 note.text.clear();
-                quint32 sizeOfText = temp.size - (quint32)sizeof(note) + (quint32)sizeof(note.text); // size of text stored in chunk
+                int sizeOfText = temp.size - 4; // size of text stored in chunk
                 if (sizeOfText != 0)
                 {
                     note.text.reserve(sizeOfText);
@@ -214,18 +215,18 @@ qint64 WaveFile::readMarkers(QVector<Markers> *marker)
         }
         // setting parameters to Markers QVector
         marker->clear();
-//        for(int i=0; i<file.cue.numCuePoints;i++)
-//        {
-//            //setting text
-//            QString temp = "";
-//            if (!listLtxt_.isEmpty())
-//                temp += listLtxt_[i].text+ "\n";
-//            if (!listLabels_.isEmpty())
-//                temp += listLabels_[i].text+ "\n";
-//            if (!listNotes_.isEmpty())
-//                temp += listNotes_[i].text + "\n";
-//            marker->append(Markers(file.cue.list[i].sampleOffset,listLtxt_[i].text,listLabels_[i].text));
-//        }
+        for(int i=0; i<file.cue.numCuePoints;i++)
+        {
+            //setting text
+            QString temp = "";
+            if (!listLtxt_.isEmpty())
+                temp += listLtxt_[i].text+ "\n";
+            if (!listLabels_.isEmpty())
+                temp += listLabels_[i].text+ "\n";
+            if (!listNotes_.isEmpty())
+                temp += listNotes_[i].text + "\n";
+            marker->append(Markers(file.cue.list[i].sampleOffset,listLtxt_[i].text,listLabels_[i].text));
+        }
         return result; //and of file, returning
     }
     else //at EOF
