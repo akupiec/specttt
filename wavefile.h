@@ -13,6 +13,7 @@ class WaveFile : public QFile
 public:
     // Constructors
     WaveFile(const QString& name);
+    ~WaveFile();
     //Reading Samples
     qint64 readData(double *buffer, int bufferSize, int channelId);
     qint64 readData(double *buffer, int bufferSize, qint64 offset, int channelId);

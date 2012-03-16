@@ -6,6 +6,10 @@ WaveFile::WaveFile(const QString &name) : QFile(name)
     open(QIODevice::ReadOnly);
     readHeader();
 }
+WaveFile::~WaveFile()
+{
+    close();
+}
 
 qint64 WaveFile::readHeader()
 {
@@ -164,7 +168,6 @@ qint64 WaveFile::readMarkers(QVector<Markers> *marker)
             {
                 File::LabeledTextChunk ltxt;
                 result += read(reinterpret_cast<char *>(&ltxt),20);
-                qDebug() << sizeof(ltxt)-sizeof(ltxt.text) -8 << "="<< sizeof(ltxt)<<"-"<<sizeof(ltxt.text);
                 ltxt.text.clear();
                 int sizeOfText = temp.size-28; // size of text stored in chunk
                 if (sizeOfText > 0)
@@ -174,7 +177,7 @@ qint64 WaveFile::readMarkers(QVector<Markers> *marker)
                     result += read(tempChar,sizeOfText); // reading text
                     ltxt.text = tempChar;
                     delete tempChar;
-                    qDebug() << "ltxt text: " << ltxt.text;
+                    //qDebug() << "ltxt text: " << ltxt.text;
                 }
                 listLtxt_.append(ltxt); // adding readed chunk to list
             }
@@ -191,7 +194,7 @@ qint64 WaveFile::readMarkers(QVector<Markers> *marker)
                     result += read(tempChar,sizeOfText);
                     label.text = tempChar;
                     delete tempChar;
-                    qDebug() << "label text: " << label.text;
+                    //qDebug() << "label text: " << label.text;
                 }
                 listLabels_.append(label);
             }
@@ -208,7 +211,7 @@ qint64 WaveFile::readMarkers(QVector<Markers> *marker)
                     result += read(tempChar,sizeOfText);
                     note.text = tempChar;
                     delete tempChar;
-                    qDebug() << "note text: " << note.text;
+                    //qDebug() << "note text: " << note.text;
                 }
                 listNotes_.append(note);
             }
