@@ -27,7 +27,7 @@ bool Plot::openFile(QString filePath)
     tempStream.setVersion(12);
     file = new WaveFile(filePath);
     quint16 halfFFTBufferSize = fft.bufferSize() / 2;
-    int samples = file->samples() / halfFFTBufferSize + 1;
+    int samples = 2 * int((double)file->samples() / fft.bufferSize() + 0.5) - 1;
     tempStream << halfFFTBufferSize << samples; // temp file header
     for (int i=0; i<samples; i++) {
         file->readData(bufferFFT,fft.bufferSize(),i*halfFFTBufferSize,0);
