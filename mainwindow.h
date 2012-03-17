@@ -20,7 +20,6 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    Plot plot;
 };
 
 #endif // MAINWINDOW_H
