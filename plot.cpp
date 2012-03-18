@@ -2,7 +2,6 @@
 #include <QDataStream>
 #include "plot.h"
 
-
 Plot::Plot(QWidget *parent) :
     QWidget(parent)
 {
@@ -45,6 +44,11 @@ bool Plot::openFile(QString filePath)
     file->readMarkers(&markerList);
     for (int i =0 ;i <markerList.count();i ++)
         qDebug() << markerList[i].label() << markerList[i].note() << markerList[i].offset();
+}
+
+void Plot::imageGenerated()
+{
+    qDebug("image generation finished");
 }
 
 bool Plot::saveFile(QString filePath)

@@ -27,13 +27,16 @@ public:
 
 signals:
 
-public slots:
+private slots:
+    void imageGenerated();
 
 private:
     // returning file offset counted form X posision on plot
     int xAxToFileOffset(int xAxis);
     // returning X pix on plot counded from wave file offSet
     int fileOffsetToXAX(int fileOffset);
+
+public:
     // wave file object
     WaveFile *file;
     // markers list object
