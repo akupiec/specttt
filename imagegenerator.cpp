@@ -17,8 +17,6 @@ ImageGenerator::ImageGenerator(WaveFile *file, QTemporaryFile *fftData, QObject 
 
 void ImageGenerator::run()
 {
-    qDebug() << imgSize;
-    QImage *img = new QImage(imgSize, QImage::Format_RGB32);
     if (zoomFactor <= 1.0)
     {
         double leaveStepY = img->height() / double(height - img->height());
@@ -119,7 +117,7 @@ QImage * ImageGenerator::plotImage(int startFFT, int stopFFT, double zoomFactor)
     fftRange.first = startFFT;
     fftRange.second = stopFFT;
     fftSamples = stopFFT - startFFT + 1;
-    imgSize = QSize (height * zoomFactor, zoomFactor * fftSamples);
+    QSize imgSize = QSize (height * zoomFactor, zoomFactor * fftSamples);
     img = new QImage(imgSize, QImage::Format_ARGB32);
     qDebug() << imgSize;
     if (img != 0 && !img->isNull())
