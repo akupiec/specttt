@@ -2,6 +2,9 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QDebug>
+#include <QFileDialog>
+#include "plot.h"
 
 namespace Ui {
     class MainWindow;

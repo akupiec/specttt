@@ -10,10 +10,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    QString filePath = QFileDialog::getOpenFileName(this, tr("Open File"),
-                                                    QDir::homePath(),
-                                                    tr("WAV files")+" (*.wav)");
-    qDebug() << filePath;
+
+    QString filePath = QFileDialog::getOpenFileName(this, tr("Open File"),QDir::homePath(),tr("WAV files")+" (*.wav)");
     ui->plot->openFile(filePath);
 }
 

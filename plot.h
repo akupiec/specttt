@@ -2,8 +2,10 @@
 #define PLOT_H
 
 #include <QWidget>
+#include <QDebug>
+#include <QDataStream>
 #include <QTemporaryFile>
-#include <QDir>
+#include <QPainter>
 #include "wavefile.h"
 #include "fft.h"
 #include "markers.h"
@@ -36,13 +38,20 @@ private:
     // returning X pix on plot counded from wave file offSet
     int fileOffsetToXAX(int fileOffset);
 
+    //Painting
+    virtual void paintEvent(QPaintEvent *);
+    virtual void resizeEvent(QResizeEvent *);
+    QPainter painter;
+    QImage *img_empty;
+    QImage *img_scene;
+    QVector<QImage*> img;
+    int img_offset; // the same as FFT_offset
+
 public:
-    // wave file object
-    WaveFile *file;
-    // markers list object
-    QVector<Markers> markerList;
-    // plot data temporary file
-    QTemporaryFile tempFile;
+    //File data objects
+    WaveFile *file; // wave file object
+    QVector<Markers> markerList; // markers list object
+    QTemporaryFile tempFile; // plot data temporary file
 };
 
 #endif // PLOT_H
