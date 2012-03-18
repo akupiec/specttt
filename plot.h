@@ -6,6 +6,7 @@
 #include <QDataStream>
 #include <QTemporaryFile>
 #include <QPainter>
+#include <QMouseEvent>
 #include "wavefile.h"
 #include "fft.h"
 #include "markers.h"
@@ -44,7 +45,14 @@ private:
     QImage *img_empty;
     QImage *img_scene;
     QVector<QImage*> img;
+
+    //moving
     int img_offset; // the same as FFT_offset
+    bool draggingEnabled;
+    virtual void mousePressEvent(QMouseEvent *);
+    virtual void mouseReleaseEvent(QMouseEvent *);
+    virtual void mouseMoveEvent(QMouseEvent *);
+    int oldMousePos; //used only in mose move event
 
     //File data objects
     WaveFile *file; // wave file object
@@ -52,6 +60,8 @@ private:
     QTemporaryFile tempFile; // plot data temporary file
     int maxFFToffset;
     int halfFFTBufferSize;
+
+
 };
 
 #endif // PLOT_H

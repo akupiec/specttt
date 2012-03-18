@@ -7,6 +7,7 @@ Plot::Plot(QWidget *parent) :
     QWidget(parent)
 {
     file = 0;
+    draggingEnabled = false;
     img_empty = new QImage(100,100,QImage::Format_Mono);
     img_empty->load("empty.bmp");
     img_scene = 0;
@@ -17,6 +18,7 @@ Plot::Plot(QWidget *parent) :
     img.append(img_empty);
     img.append(img_empty);
     img.append(img_empty);
+
 }
 
 Plot::~Plot()
@@ -50,7 +52,7 @@ bool Plot::openFile(QString filePath)
         for (qint16 i=0; i<halfFFTBufferSize; i++) {
 
 
-// WSTYDU NIE MASZ ? LICZYÆ DOUBLE I RZUTOWAÆ NA 1 BAJT ?
+            // WSTYDU NIE MASZ ? LICZYÆ DOUBLE I RZUTOWAÆ NA 1 BAJT ?
 
 
             if (buffer[i] < 1.0 && buffer[i] >= 0.0)
@@ -67,16 +69,10 @@ bool Plot::openFile(QString filePath)
 
 void Plot::paintEvent(QPaintEvent *)
 {
-    painter.begin(this);
-    painter.drawImage(0,0,*img_scene);
-    painter.end();
-}
-void Plot::resizeEvent(QResizeEvent *)
-{
-//config
-static const int frameWidth = 2;
-static const int grindVerticalSpace = 40;
-static const int grindHorizontalSpace = 20;
+    //config
+    static const int frameWidth = 2;
+    static const int grindVerticalSpace = 40;
+    static const int grindHorizontalSpace = 20;
 
     //creating new img_scene
     if(img_scene)
@@ -120,7 +116,7 @@ static const int grindHorizontalSpace = 20;
     {
         offset = (i*grindVerticalSpace)+frameWidth;
         painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
-        if (file != 0)    
+        if (file != 0)
             value.setNum((offset*file->time()/maxFFToffset),'f',3);
         else
             value = "0.0";
@@ -131,7 +127,7 @@ static const int grindHorizontalSpace = 20;
     offset = this->height()-AX_X_DESC_SPACE-1; //painting grind offset
     int frequencyGrindOffset; // frequensy per grind line
     if (file != 0)
-         frequencyGrindOffset = grindHorizontalSpace*file->frequency()/img[0]->height();
+        frequencyGrindOffset = grindHorizontalSpace*file->frequency()/img[0]->height();
     else
         frequencyGrindOffset = 0 ;
     for (int i=0;i<grindHorizontalCount;i++) // painting grind loop
@@ -141,7 +137,35 @@ static const int grindHorizontalSpace = 20;
         painter.drawText(this->width()-AX_Y_DESC_SPACE+15,offset,value);
         offset -= grindHorizontalSpace;
     }
-
     //finish painting
     painter.end();
+
+
+    painter.begin(this);
+    painter.drawImage(0,0,*img_scene);
+    painter.end();
+}
+
+void Plot::mousePressEvent(QMouseEvent *e)
+{
+    oldMousePos = e->pos().x();
+    if (e->button() == Qt::LeftButton && !draggingEnabled) // enable moving plot by dragging
+        draggingEnabled = true;
+}
+
+void Plot::mouseReleaseEvent(QMouseEvent *)
+{
+    if(draggingEnabled) //disable moving plot by dragging
+        draggingEnabled = false;
+}
+
+void Plot::mouseMoveEvent(QMouseEvent *e)
+{
+    if(draggingEnabled)
+    {
+        img_offset -= e->pos().x()-oldMousePos;
+        oldMousePos = e->pos().x();
+        qDebug() << img_offset;
+    }
+    this->update();
 }
