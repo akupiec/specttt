@@ -50,6 +50,8 @@ private:
     WaveFile *file; // wave file object
     QVector<Markers> markerList; // markers list object
     QTemporaryFile tempFile; // plot data temporary file
+    int maxFFToffset;
+    int halfFFTBufferSize;
 };
 
 #endif // PLOT_H

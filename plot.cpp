@@ -40,10 +40,10 @@ bool Plot::openFile(QString filePath)
     tempStream.setVersion(12);
     //wave file
     file = new WaveFile(filePath);
-    quint16 halfFFTBufferSize = fft.bufferSize() / 2;
-    int samples = file->samples() / halfFFTBufferSize + 1;
-    tempStream << halfFFTBufferSize << samples; // temp file header
-    for (int i=0; i<samples; i++) {
+    halfFFTBufferSize = fft.bufferSize() / 2;
+    maxFFToffset = file->samples() / halfFFTBufferSize + 1;
+    tempStream << halfFFTBufferSize << maxFFToffset; // temp file header
+    for (int i=0; i<maxFFToffset; i++) {
         file->readData(buffer,fft.bufferSize(),i*halfFFTBufferSize,0);
         fft.makeWindow(buffer);
         fft.countFFT(buffer);
@@ -62,28 +62,7 @@ bool Plot::openFile(QString filePath)
     tempFile.close();
     qDebug() << tempFile.fileName();
     file->readMarkers(&markerList);
-//    for (int i =0 ;i <markerList.count();i ++)
-//        qDebug() << markerList[i].label() << markerList[i].note() << markerList[i].offset();
-}
-
-bool Plot::saveFile(QString filePath)
-{
-
-}
-
-bool Plot::splitFile(QString filePath)
-{
-
-}
-
-int Plot::xAxToFileOffset(int xAxis)
-{
-
-}
-
-int Plot::fileOffsetToXAX(int fileOffset)
-{
-
+    return true;
 }
 
 void Plot::paintEvent(QPaintEvent *)
@@ -135,30 +114,34 @@ static const int grindHorizontalSpace = 20;
     //Veritical
     painter.setPen(QPen(QBrush(Qt::white),1,Qt::DotLine));
     QString value;
-    int grindVerticalCount = ((this->width()-AX_Y_DESC_SPACE-frameWidth)/grindVerticalSpace)+1;
-    int offset;
-    for (int i=0;i<grindVerticalCount;i++)
+    int grindVerticalCount = ((this->width()-AX_Y_DESC_SPACE-frameWidth)/grindVerticalSpace)+1; //amout of grind lines
+    int offset; // painting grind offset
+    for (int i=0;i<grindVerticalCount;i++) // painting grind loop
     {
         offset = (i*grindVerticalSpace)+frameWidth;
         painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
-        if (file != 0)
-           value.number((offset/file->time())*(this->width()-AX_Y_DESC_SPACE));
+        if (file != 0)    
+            value.setNum((offset*file->time()/maxFFToffset),'f',3);
         else
-           value = "0.0";
+            value = "0.0";
         painter.drawText(offset,this->height()-AX_X_DESC_SPACE+frameWidth+15,value);
     }
     //Horizontal
-    int grindHorizontalCount = ((this->height()-AX_X_DESC_SPACE-frameWidth)/grindHorizontalSpace)+1;
-    offset = this->height()-AX_X_DESC_SPACE-1;
-    for (int i=0;i<grindHorizontalCount;i++)
+    int grindHorizontalCount = ((this->height()-AX_X_DESC_SPACE-frameWidth)/grindHorizontalSpace)+1; // amount of grind lines
+    offset = this->height()-AX_X_DESC_SPACE-1; //painting grind offset
+    int frequencyGrindOffset; // frequensy per grind line
+    if (file != 0)
+         frequencyGrindOffset = grindHorizontalSpace*file->frequency()/img[0]->height();
+    else
+        frequencyGrindOffset = 0 ;
+    for (int i=0;i<grindHorizontalCount;i++) // painting grind loop
     {
         painter.drawLine(frameWidth,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
-        if (file != 0)
-           value.number((offset/file->frequency())*(this->height()-AX_X_DESC_SPACE));
-        else
-           value = "0.0";
+        value.setNum(i*frequencyGrindOffset);
         painter.drawText(this->width()-AX_Y_DESC_SPACE+15,offset,value);
         offset -= grindHorizontalSpace;
     }
+
+    //finish painting
     painter.end();
 }
