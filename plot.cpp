@@ -12,13 +12,9 @@ Plot::Plot(QWidget *parent) :
     img_empty = new QImage(100,100,QImage::Format_Mono);
     img_empty->load("empty.bmp");
     img_scene = 0;
-    img.clear();
     img_offset = 125;
-
-    img.append(img_empty);
-    img.append(img_empty);
-    img.append(img_empty);
-    img.append(img_empty);
+    img = 0;
+    generator = 0;
 }
 
 Plot::~Plot()
@@ -27,6 +23,10 @@ Plot::~Plot()
         delete file;
     if(img_empty)
         delete img_empty;
+    if(img)
+        delete img;
+    if(generator)
+        delete generator;
 }
 
 bool Plot::openFile(QString filePath)
@@ -66,77 +66,18 @@ bool Plot::openFile(QString filePath)
     file->readMarkers(&markerList);
 //    for (int i =0 ;i <markerList.count();i ++)
 //        qDebug() << markerList[i].label() << markerList[i].note() << markerList[i].offset();
+
+    generator = new ImageGenerator(file, &tempFile, this);
+    connect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
+
 }
 
 void Plot::imageGenerated()
 {
     qDebug("image generation finished");
-}
-
-bool Plot::saveFile(QString filePath)
-{
-
-}
-
-bool Plot::splitFile(QString filePath)
-{
-
-}
-
-int Plot::xAxToFileOffset(int xAxis)
-{
-
-}
-
-int Plot::fileOffsetToXAX(int fileOffset)
-{
-
-}
-
-void Plot::paintEvent(QPaintEvent *)
-{
-    painter.begin(this);
-    painter.drawImage(0,0,*img_scene);
-    painter.end();
-}
-void Plot::resizeEvent(QResizeEvent *)
-{
-//config
-static const int frameWidth = 2;
-static const int grindVerticalSpace = 40;
-static const int grindHorizontalSpace = 20;
-
-    //creating new img_scene
-    if(img_scene)
-        delete img_scene;
-    img_scene = new QImage(this->width(),this->height(),QImage::Format_ARGB32);
-
-    //background
     painter.begin(img_scene);
-    painter.setBrush(Qt::black);
-    painter.drawRect(0,0,this->width(),this->height());
 
-    //samples if any
-    if(img.count())
-    {
-        int sceneOffsetX = -(img_offset%img[0]->width())+frameWidth;
-        int sceneOffsetY = this->height()-AX_X_DESC_SPACE -img[0]->height();
-        int maxImgOnScene = this->width()/img[0]->width()+2;
-        for (int i=img_offset/img[0]->width(),j=0;i<img.count() && i < maxImgOnScene;i++,j++)
-        {
-            painter.drawImage(sceneOffsetX,sceneOffsetY,*img.at(i));
-            sceneOffsetX += img[i]->width();
-        }
-    }
-
-    //axis background
-    painter.drawRect(this->width()-AX_Y_DESC_SPACE,0,AX_Y_DESC_SPACE,this->height()); // background for axis Y
-    painter.drawRect(0,this->height()-AX_X_DESC_SPACE,this->width(),AX_X_DESC_SPACE); // background for axis
-
-    //frame
-    painter.setPen(QPen(QBrush(Qt::darkGreen),frameWidth));
-    painter.setBrush(Qt::NoBrush);
-    painter.drawRect(frameWidth/2,frameWidth/2,this->width()-AX_Y_DESC_SPACE,this->height()-AX_X_DESC_SPACE);
+    painter.drawImage(0,0,*img);
 
     //grind & values
     //Veritical
@@ -168,4 +109,47 @@ static const int grindHorizontalSpace = 20;
         offset -= grindHorizontalSpace;
     }
     painter.end();
+    delete img;
+    img =0;
+    this->update();
 }
+
+void Plot::paintEvent(QPaintEvent *)
+{
+    painter.begin(this);
+    painter.drawImage(0,0,*img_scene);
+    painter.end();
+}
+void Plot::resizeEvent(QResizeEvent *)
+{
+    //creating new img_scene
+    if(img_scene)
+        delete img_scene;
+    img_scene = new QImage(this->width(),this->height(),QImage::Format_ARGB32);
+
+    //background
+    painter.begin(img_scene);
+    painter.setBrush(Qt::black);
+    painter.drawRect(0,0,this->width(),this->height());
+
+    //loading img
+    if(generator)
+    {
+        //if(generator->isRunning())
+            //generator->terminate();
+        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-frameWidth+img_offset,1);
+    }
+    //painting img
+        painter.drawImage(frameWidth,frameWidth,*img_empty);
+    //axis background
+    painter.drawRect(this->width()-AX_Y_DESC_SPACE,0,AX_Y_DESC_SPACE,this->height()); // background for axis Y
+    painter.drawRect(0,this->height()-AX_X_DESC_SPACE,this->width(),AX_X_DESC_SPACE); // background for axis
+
+    //frame
+    painter.setPen(QPen(QBrush(Qt::darkGreen),frameWidth));
+    painter.setBrush(Qt::NoBrush);
+    painter.drawRect(frameWidth/2,frameWidth/2,this->width()-AX_Y_DESC_SPACE,this->height()-AX_X_DESC_SPACE);
+
+    painter.end();
+}
+

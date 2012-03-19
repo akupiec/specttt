@@ -24,7 +24,6 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    ImageGenerator *generator;
 };
 
 #endif // MAINWINDOW_H

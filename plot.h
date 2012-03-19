@@ -9,6 +9,8 @@
 #include "wavefile.h"
 #include "fft.h"
 #include "markers.h"
+#include "imagegenerator.h"
+
 
 //klasa jest odpowiedzialna za koordynacje danych miêdzy wavefile a fft
 //jest to klasa odpowiedzialna za rysowanie wykresu*   ///// ja by to i tak wywali³ o osobnej ³atwiej bêdzie nawigowaæ danymi nie pogubimy sie co dlaczego i gdzie
@@ -44,8 +46,15 @@ private:
     QPainter painter;
     QImage *img_empty;
     QImage *img_scene;
-    QVector<QImage*> img;
+    QImage *img;
     int img_offset; // the same as FFT_offset
+    ImageGenerator *generator;
+
+    //config
+    static const int frameWidth = 2;
+    static const int grindVerticalSpace = 40;
+    static const int grindHorizontalSpace = 20;
+
 
 public:
     //File data objects

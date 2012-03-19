@@ -118,8 +118,8 @@ QImage * ImageGenerator::plotImage(int startFFT, int stopFFT, double zoomFactor)
     fftRange.second = stopFFT;
     fftSamples = stopFFT - startFFT + 1;
     QSize imgSize = QSize (height * zoomFactor, zoomFactor * fftSamples);
-    img = new QImage(imgSize, QImage::Format_ARGB32);
-    qDebug() << imgSize;
+    img = new QImage(height * zoomFactor, zoomFactor * fftSamples, QImage::Format_ARGB32);
+    qDebug() << imgSize << "in generator img size: " << img->width() << img->height();
     if (img != 0 && !img->isNull())
         start();
     return img;
