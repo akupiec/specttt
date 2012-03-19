@@ -48,7 +48,8 @@ void ImageGenerator::run()
                 }
                 fftData->read(&data,1); // read pixel data from FFT temp file
                 uData = data + 128; // signed to unsigned int range 0-255
-                img->setPixel(j,i,qRgb(uData,uData,uData)); // set pixel color
+                if(img && !img->isNull())
+                    img->setPixel(j,i,qRgb(uData,uData,uData)); // set pixel color
             }
         }
     }
@@ -118,8 +119,7 @@ QImage * ImageGenerator::plotImage(int startFFT, int stopFFT, double zoomFactor)
     fftRange.second = stopFFT;
     fftSamples = stopFFT - startFFT + 1;
     QSize imgSize = QSize (height * zoomFactor, zoomFactor * fftSamples);
-    img = new QImage(height * zoomFactor, zoomFactor * fftSamples, QImage::Format_ARGB32);
-    qDebug() << imgSize << "in generator img size: " << img->width() << img->height();
+    img = new QImage(imgSize, QImage::Format_ARGB32);
     if (img != 0 && !img->isNull())
         start();
     return img;

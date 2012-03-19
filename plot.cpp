@@ -75,9 +75,20 @@ bool Plot::openFile(QString filePath)
 void Plot::imageGenerated()
 {
     qDebug("image generation finished");
+    if (painter.isActive()) painter.end();
     painter.begin(img_scene);
 
-    painter.drawImage(0,0,*img);
+    //painting spectrum
+    if(img && !img->isNull()) painter.drawImage(frameWidth,this->height()-AX_X_DESC_SPACE-img->height(),*img);
+
+    //axis background
+    painter.drawRect(this->width()-AX_Y_DESC_SPACE,0,AX_Y_DESC_SPACE,this->height()); // background for axis Y
+    painter.drawRect(0,this->height()-AX_X_DESC_SPACE,this->width(),AX_X_DESC_SPACE); // background for axis
+
+    //frame
+    painter.setPen(QPen(QBrush(Qt::darkGreen),frameWidth));
+    painter.setBrush(Qt::NoBrush);
+    painter.drawRect(frameWidth/2,frameWidth/2,this->width()-AX_Y_DESC_SPACE,this->height()-AX_X_DESC_SPACE);
 
     //grind & values
     //Veritical
@@ -116,12 +127,14 @@ void Plot::imageGenerated()
 
 void Plot::paintEvent(QPaintEvent *)
 {
+    if (painter.isActive()) painter.end();
     painter.begin(this);
     painter.drawImage(0,0,*img_scene);
     painter.end();
 }
 void Plot::resizeEvent(QResizeEvent *)
 {
+    if (painter.isActive()) painter.end();
     //creating new img_scene
     if(img_scene)
         delete img_scene;
@@ -137,18 +150,10 @@ void Plot::resizeEvent(QResizeEvent *)
     {
         //if(generator->isRunning())
             //generator->terminate();
-        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-frameWidth+img_offset,1);
+        img = generator->plotImage(0,500,1);
     }
     //painting img
-        painter.drawImage(frameWidth,frameWidth,*img_empty);
-    //axis background
-    painter.drawRect(this->width()-AX_Y_DESC_SPACE,0,AX_Y_DESC_SPACE,this->height()); // background for axis Y
-    painter.drawRect(0,this->height()-AX_X_DESC_SPACE,this->width(),AX_X_DESC_SPACE); // background for axis
-
-    //frame
-    painter.setPen(QPen(QBrush(Qt::darkGreen),frameWidth));
-    painter.setBrush(Qt::NoBrush);
-    painter.drawRect(frameWidth/2,frameWidth/2,this->width()-AX_Y_DESC_SPACE,this->height()-AX_X_DESC_SPACE);
+        painter.drawImage(frameWidth,frameWidth,*img_empty);    
 
     painter.end();
 }
