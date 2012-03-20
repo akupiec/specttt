@@ -50,11 +50,6 @@ bool Plot::openFile(QString filePath)
         fft.makeWindow(buffer);
         fft.countFFT(buffer);
         for (qint16 i=0; i<halfFFTBufferSize; i++) {
-
-
-// WSTYDU NIE MASZ ? LICZYÆ DOUBLE I RZUTOWAÆ NA 1 BAJT ?
-
-
             if (buffer[i] < 1.0 && buffer[i] >= 0.0)
                 tempStream << (uchar)(buffer[i]*255);
             else
@@ -64,22 +59,59 @@ bool Plot::openFile(QString filePath)
     tempFile.close();
     qDebug() << tempFile.fileName();
     file->readMarkers(&markerList);
-//    for (int i =0 ;i <markerList.count();i ++)
-//        qDebug() << markerList[i].label() << markerList[i].note() << markerList[i].offset();
-
     generator = new ImageGenerator(file, &tempFile, this);
     connect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
-
+    return true;
 }
 
 void Plot::imageGenerated()
 {
-    qDebug("image generation finished");
-    if (painter.isActive()) painter.end();
-    painter.begin(img_scene);
-
+    qDebug("image generation finished");    
     //painting spectrum
-    if(img && !img->isNull()) painter.drawImage(frameWidth,this->height()-AX_X_DESC_SPACE-img->height(),*img);
+    //delete img_thread_scene; img_thread_scene =0;
+    //img_thread_scene = new QImage(img_scene->size(),img_scene->format());
+    paint(img_scene,img);
+}
+
+void Plot::paintEvent(QPaintEvent *)
+{
+    QPainter painter;
+    painter.begin(this);
+   // if(generator && generator->isFinished())
+   //     painter.drawImage(0,0,*img_thread_scene);
+   // else
+        painter.drawImage(0,0,*img_scene);
+    painter.end();
+
+}
+void Plot::resizeEvent(QResizeEvent *)
+{
+    //creating new img_scene
+    delete img_scene; img_scene = 0;
+    img_scene = new QImage(this->width(),this->height(),QImage::Format_ARGB32);
+
+    //loading img
+    if(generator)
+        img = generator->plotImage(0,500,1);
+    else
+        paint(img_scene); // paint empty scene;
+}
+
+inline void Plot::paint(QImage *scene, QImage *image)
+{
+    QPainter painter;
+
+    //checking image and setting to empty if null
+    if(!image)
+        image = img_empty;
+
+    //background
+    painter.begin(scene);
+    painter.setBrush(Qt::black);
+    painter.drawRect(0,0,this->width(),this->height());
+
+    //painting image
+    painter.drawImage(frameWidth,this->height()-AX_X_DESC_SPACE-frameWidth-image->height(),*image);
 
     //axis background
     painter.drawRect(this->width()-AX_Y_DESC_SPACE,0,AX_Y_DESC_SPACE,this->height()); // background for axis Y
@@ -101,9 +133,9 @@ void Plot::imageGenerated()
         offset = (i*grindVerticalSpace)+frameWidth;
         painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
         if (file != 0)
-           value.number((offset/file->time())*(this->width()-AX_Y_DESC_SPACE));
+            value.number((offset/file->time())*(this->width()-AX_Y_DESC_SPACE));
         else
-           value = "0.0";
+            value = "0.0";
         painter.drawText(offset,this->height()-AX_X_DESC_SPACE+frameWidth+15,value);
     }
     //Horizontal
@@ -113,48 +145,14 @@ void Plot::imageGenerated()
     {
         painter.drawLine(frameWidth,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
         if (file != 0)
-           value.number((offset/file->frequency())*(this->height()-AX_X_DESC_SPACE));
+            value.number((offset/file->frequency())*(this->height()-AX_X_DESC_SPACE));
         else
-           value = "0.0";
+            value = "0.0";
         painter.drawText(this->width()-AX_Y_DESC_SPACE+15,offset,value);
         offset -= grindHorizontalSpace;
     }
+
+    //ending
     painter.end();
-    delete img;
-    img =0;
     this->update();
 }
-
-void Plot::paintEvent(QPaintEvent *)
-{
-    if (painter.isActive()) painter.end();
-    painter.begin(this);
-    painter.drawImage(0,0,*img_scene);
-    painter.end();
-}
-void Plot::resizeEvent(QResizeEvent *)
-{
-    if (painter.isActive()) painter.end();
-    //creating new img_scene
-    if(img_scene)
-        delete img_scene;
-    img_scene = new QImage(this->width(),this->height(),QImage::Format_ARGB32);
-
-    //background
-    painter.begin(img_scene);
-    painter.setBrush(Qt::black);
-    painter.drawRect(0,0,this->width(),this->height());
-
-    //loading img
-    if(generator)
-    {
-        //if(generator->isRunning())
-            //generator->terminate();
-        img = generator->plotImage(0,500,1);
-    }
-    //painting img
-        painter.drawImage(frameWidth,frameWidth,*img_empty);    
-
-    painter.end();
-}
-

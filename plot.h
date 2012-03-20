@@ -10,6 +10,7 @@
 #include "fft.h"
 #include "markers.h"
 #include "imagegenerator.h"
+#include <QQueue>
 
 
 //klasa jest odpowiedzialna za koordynacje danych miêdzy wavefile a fft
@@ -41,14 +42,17 @@ private:
     int fileOffsetToXAX(int fileOffset);
 
     //Painting
+    inline void paint(QImage *scene, QImage *image = 0);
     virtual void paintEvent(QPaintEvent *);
     virtual void resizeEvent(QResizeEvent *);
-    QPainter painter;
+    //QPainter painter;
     QImage *img_empty;
     QImage *img_scene;
+    QImage *img_thread_scene;
     QImage *img;
     int img_offset; // the same as FFT_offset
     ImageGenerator *generator;
+    QQueue<QImage*> queue;
 
     //config
     static const int frameWidth = 2;
