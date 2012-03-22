@@ -19,14 +19,10 @@ Plot::Plot(QWidget *parent) :
 
 Plot::~Plot()
 {
-    if(file)
-        delete file;
-    if(img_empty)
-        delete img_empty;
-    if(img)
-        delete img;
-    if(generator)
-        delete generator;
+    delete file; file = 0;
+    delete img_empty; img_empty = 0;
+    delete img; img = 0;
+    delete generator; generator = 0;
 }
 
 bool Plot::openFile(QString filePath)
@@ -91,8 +87,11 @@ void Plot::resizeEvent(QResizeEvent *)
     img_scene = new QImage(this->width(),this->height(),QImage::Format_ARGB32);
 
     //loading img
-    if(generator)
+    if(generator && !generator->isRunning())
+    {
+        delete img;
         img = generator->plotImage(0,500,1);
+    }
     else
         paint(img_scene); // paint empty scene;
 }
