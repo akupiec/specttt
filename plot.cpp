@@ -62,7 +62,7 @@ bool Plot::openFile(QString filePath)
 
 void Plot::imageGenerated()
 {
-    qDebug("image generation finished");    
+    qDebug("image generation finished");
     //painting spectrum
     //delete img_thread_scene; img_thread_scene =0;
     //img_thread_scene = new QImage(img_scene->size(),img_scene->format());
