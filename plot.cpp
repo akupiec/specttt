@@ -56,6 +56,7 @@ bool Plot::openFile(QString filePath)
     qDebug() << tempFile.fileName();
     file->readMarkers(&markerList);
     generator = new ImageGenerator(file, &tempFile, this);
+    generator->setZoomFactor(1.0);
     connect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
     return true;
 }
@@ -66,7 +67,7 @@ void Plot::imageGenerated()
     if (img_scene->size() != this->size())
     {
         repaintScene();
-        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-img_offset,1);
+        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-img_offset);
     }
 }
 
@@ -84,7 +85,7 @@ void Plot::resizeEvent(QResizeEvent *)
     {
         delete img; img = 0; // removing old one
         //loading img
-        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-img_offset,1);
+        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-img_offset);
     }
     else
         paint(img); // paint ... something .. anything ..
