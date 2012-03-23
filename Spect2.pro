@@ -16,14 +16,16 @@ SOURCES += main.cpp\
     fft.cpp \
     plot.cpp \
     markers.cpp \
-    imagegenerator.cpp
+    imagegenerator.cpp \
+    cyclicqueue.cpp
 
 HEADERS  += mainwindow.h \
     wavefile.h \
     fft.h \
     plot.h \
     markers.h \
-    imagegenerator.h
+    imagegenerator.h \
+    cyclicqueue.h
 
 FORMS    += mainwindow.ui
 
