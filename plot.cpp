@@ -81,12 +81,8 @@ void Plot::paintEvent(QPaintEvent *)
 }
 void Plot::resizeEvent(QResizeEvent *)
 {
-    if (generator && !generator->isRunning())
-    {
-        delete img; img = 0; // removing old one
-        //loading img
+    if (generator)
         img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-img_offset);
-    }
     else
         paint(img); // paint ... something .. anything ..
 }
