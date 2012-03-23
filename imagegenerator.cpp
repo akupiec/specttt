@@ -4,8 +4,8 @@
 #include "imagegenerator.h"
 #include "wavefile.h"
 
-ImageGenerator::ImageGenerator(WaveFile *file, QTemporaryFile *fftData, QObject *parent) :
-    QThread(parent)
+ImageGenerator::ImageGenerator(WaveFile *file, QTemporaryFile *fftData, QVector<QRgb> *colors, QObject *parent)
+    : QThread(parent)
 {
     this->fftData = fftData;
     this->file = file;
@@ -13,6 +13,7 @@ ImageGenerator::ImageGenerator(WaveFile *file, QTemporaryFile *fftData, QObject 
     fftData->seek(0);
     QDataStream stream (fftData);
     stream >> height >> width;
+    this->colors = colors;
 }
 
 void ImageGenerator::run()
@@ -53,12 +54,13 @@ void ImageGenerator::run()
                         continue;
                     }
                     fftData->read(&data,1); // read pixel data from FFT temp file
-                    uData = data + 128; // signed to unsigned int range 0-255
+                    uData = data;
+                    if (data < 0)
+                        uData += 0xff; // signed to unsigned int range 0-255
                     if(img && !img->isNull())
-                        img->setPixel(x,y,qRgb(uData,uData,uData)); // set pixel color
+                        img->setPixel(x,y,colors->at(uData)); // set pixel color
                 }
             }
-           // qDebug() << img->size();
         }
         else if (zoomFactor_ >= 2.0)
         {

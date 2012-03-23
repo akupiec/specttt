@@ -21,5 +21,4 @@ void MainWindow::on_actionImageGenerator_triggered()
     QString filePath = QFileDialog::getOpenFileName(this, tr("Open File"),QDir::homePath(),tr("WAV files")+" (*.wav)");
     ui->plot->openFile(filePath);
     // ImageGenerator test
-
 }

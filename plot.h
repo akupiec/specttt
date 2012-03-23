@@ -6,12 +6,13 @@
 #include <QDataStream>
 #include <QTemporaryFile>
 #include <QPainter>
+#include <QQueue>
 #include "wavefile.h"
 #include "fft.h"
 #include "markers.h"
 #include "imagegenerator.h"
-#include <QQueue>
 
+class Settings;
 
 //klasa jest odpowiedzialna za koordynacje danych miêdzy wavefile a fft
 //jest to klasa odpowiedzialna za rysowanie wykresu*   ///// ja by to i tak wywali³ o osobnej ³atwiej bêdzie nawigowaæ danymi nie pogubimy sie co dlaczego i gdzie
@@ -66,6 +67,7 @@ public:
     WaveFile *file; // wave file object
     QVector<Markers> markerList; // markers list object
     QTemporaryFile tempFile; // plot data temporary file
+    Settings *settings; // plot settings object
 };
 
 #endif // PLOT_H

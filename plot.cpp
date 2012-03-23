@@ -1,9 +1,11 @@
 #include <QDebug>
 #include <QDataStream>
 #include "plot.h"
+#include "settings.h"
 
 #define AX_X_DESC_SPACE 30
 #define AX_Y_DESC_SPACE 60
+#define SPECT_PROJECT_NAME "Spect2"
 
 Plot::Plot(QWidget *parent) :
     QWidget(parent)
@@ -15,6 +17,7 @@ Plot::Plot(QWidget *parent) :
     img_offset = 0;
     img = 0;
     generator = 0;
+    settings = new Settings(SPECT_PROJECT_NAME);
 }
 
 Plot::~Plot()
@@ -23,6 +26,7 @@ Plot::~Plot()
     delete img_empty; img_empty = 0;
     delete img; img = 0;
     delete generator; generator = 0;
+    delete settings;
 }
 
 bool Plot::openFile(QString filePath)
@@ -55,7 +59,7 @@ bool Plot::openFile(QString filePath)
     tempFile.close();
     qDebug() << tempFile.fileName();
     file->readMarkers(&markerList);
-    generator = new ImageGenerator(file, &tempFile, this);
+    generator = new ImageGenerator(file, &tempFile, settings->colors(), this);
     generator->setZoomFactor(1.0);
     connect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
     return true;

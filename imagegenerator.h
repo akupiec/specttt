@@ -3,6 +3,7 @@
 
 #include <QThread>
 #include <QSize>
+#include <QColor>
 #include "cyclicqueue.h"
 
 class QTemporaryFile;
@@ -13,7 +14,7 @@ class ImageGenerator : public QThread
 {
     Q_OBJECT
 public:
-    explicit ImageGenerator(WaveFile *file, QTemporaryFile *fftData, QObject *parent = 0);
+    ImageGenerator(WaveFile *file, QTemporaryFile *fftData, QVector<QRgb> *colors, QObject *parent = 0);
     QImage *plotImage(int startFFT, int stopFFT);
     double zoomFactor() const { return zoomFactor_; }
     void setZoomFactor(double zoom) { zoomFactor_ = zoom; }
@@ -35,6 +36,7 @@ private:
     QImage *img; // working image
 //    QQueue <ImageData> workQueue;
     CyclicQueue <ImageData> workQueue;
+    QVector<QRgb> *colors;
 };
 
 #endif // IMAGEGENERATOR_H
