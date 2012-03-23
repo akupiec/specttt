@@ -12,7 +12,7 @@ Plot::Plot(QWidget *parent) :
     img_empty = new QImage(100,100,QImage::Format_Mono);
     img_empty->load("empty.bmp");
     img_scene = 0;
-    img_offset = 125;
+    img_offset = 0;
     img = 0;
     generator = 0;
 }
@@ -62,42 +62,38 @@ bool Plot::openFile(QString filePath)
 
 void Plot::imageGenerated()
 {
-    qDebug("image generation finished");
-    //painting spectrum
-    //delete img_thread_scene; img_thread_scene =0;
-    //img_thread_scene = new QImage(img_scene->size(),img_scene->format());
-    paint(img_scene,img);
+    paint(img);
+    if (img_scene->size() != this->size())
+    {
+        repaintScene();
+        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-img_offset,1);
+    }
 }
 
 void Plot::paintEvent(QPaintEvent *)
 {
     QPainter painter;
     painter.begin(this);
-   // if(generator && generator->isFinished())
-   //     painter.drawImage(0,0,*img_thread_scene);
-   // else
-        painter.drawImage(0,0,*img_scene);
+    painter.drawImage(0,0,*img_scene);
     painter.end();
 
 }
 void Plot::resizeEvent(QResizeEvent *)
 {
-    //creating new img_scene
-    delete img_scene; img_scene = 0;
-    img_scene = new QImage(this->width(),this->height(),QImage::Format_ARGB32);
-
-    //loading img
-    if(generator && !generator->isRunning())
+    if (generator && !generator->isRunning())
     {
-        delete img;
-        img = generator->plotImage(0,500,1);
+        delete img; img = 0; // removing old one
+        //loading img
+        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-img_offset,1);
     }
     else
-        paint(img_scene); // paint empty scene;
+        paint(img); // paint ... something .. anything ..
 }
 
-inline void Plot::paint(QImage *scene, QImage *image)
+inline void Plot::paint(QImage *image)
 {
+    repaintScene();
+
     QPainter painter;
 
     //checking image and setting to empty if null
@@ -105,7 +101,7 @@ inline void Plot::paint(QImage *scene, QImage *image)
         image = img_empty;
 
     //background
-    painter.begin(scene);
+    painter.begin(img_scene);
     painter.setBrush(Qt::black);
     painter.drawRect(0,0,this->width(),this->height());
 
@@ -154,4 +150,11 @@ inline void Plot::paint(QImage *scene, QImage *image)
     //ending
     painter.end();
     this->update();
+}
+
+inline void Plot::repaintScene() // eliminate "blinkin" if is not to offen
+{
+    //remaking scene
+    delete img_scene; img_scene = 0;
+    img_scene = new QImage(this->width(),this->height(),QImage::Format_ARGB32);
 }

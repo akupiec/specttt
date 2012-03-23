@@ -42,13 +42,14 @@ private:
     int fileOffsetToXAX(int fileOffset);
 
     //Painting
-    inline void paint(QImage *scene, QImage *image = 0);
+    inline void paint(QImage *image = 0);
+    inline void repaintScene();
+    inline void generateNewImg(QSize size);
     virtual void paintEvent(QPaintEvent *);
     virtual void resizeEvent(QResizeEvent *);
     //QPainter painter;
     QImage *img_empty;
     QImage *img_scene;
-    QImage *img_thread_scene;
     QImage *img;
     int img_offset; // the same as FFT_offset
     ImageGenerator *generator;

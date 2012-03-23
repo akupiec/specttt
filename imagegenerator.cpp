@@ -52,7 +52,7 @@ void ImageGenerator::run()
                     img->setPixel(x,y,qRgb(uData,uData,uData)); // set pixel color
             }
         }
-        qDebug() << img->size();
+       // qDebug() << img->size();
     }
     else if (zoomFactor >= 2.0)
     {
@@ -119,6 +119,8 @@ QImage * ImageGenerator::plotImage(int startFFT, int stopFFT, double zoomFactor)
     fftRange.first = startFFT;
     fftRange.second = stopFFT;
     fftSamples = stopFFT - startFFT + 1;
+    if (width < fftSamples)
+        fftSamples = width;
     QSize imgSize = QSize (zoomFactor * fftSamples, height * zoomFactor);
     img = new QImage(imgSize, QImage::Format_ARGB32);
     if (img != 0 && !img->isNull())
