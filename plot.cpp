@@ -12,7 +12,7 @@ Plot::Plot(QWidget *parent) :
     img_empty = new QImage(100,100,QImage::Format_Mono);
     img_empty->load("empty.bmp");
     img_scene = 0;
-    img_offset = 0;
+    img_offset = 100;
     img = 0;
     generator = 0;
 }
@@ -39,9 +39,9 @@ bool Plot::openFile(QString filePath)
     //wave file
     file = new WaveFile(filePath);
     quint16 halfFFTBufferSize = fft.bufferSize() / 2;
-    int samples = file->samples() / halfFFTBufferSize + 1;
-    tempStream << halfFFTBufferSize << samples; // temp file header
-    for (int i=0; i<samples; i++) {
+    maxFFToffset = file->samples() / halfFFTBufferSize + 1;
+    tempStream << halfFFTBufferSize << maxFFToffset; // temp file header
+    for (int i=0; i<maxFFToffset; i++) {
         file->readData(buffer,fft.bufferSize(),i*halfFFTBufferSize,0);
         fft.makeWindow(buffer);
         fft.countFFT(buffer);
@@ -66,7 +66,7 @@ void Plot::imageGenerated()
     if (img_scene->size() != this->size())
     {
         repaintScene();
-        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-img_offset,1);
+        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-frameWidth,1);
     }
 }
 
@@ -84,7 +84,7 @@ void Plot::resizeEvent(QResizeEvent *)
     {
         delete img; img = 0; // removing old one
         //loading img
-        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-img_offset,1);
+        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE+img_offset,1);
     }
     else
         paint(img); // paint ... something .. anything ..
@@ -121,14 +121,14 @@ inline void Plot::paint(QImage *image)
     //Veritical
     painter.setPen(QPen(QBrush(Qt::white),1,Qt::DotLine));
     QString value;
-    int grindVerticalCount = ((this->width()-AX_Y_DESC_SPACE-frameWidth)/grindVerticalSpace)+1;
-    int offset;
-    for (int i=0;i<grindVerticalCount;i++)
+    int grindVerticalCount = ((this->width()-AX_Y_DESC_SPACE-frameWidth)/grindVerticalSpace)+1; //amout of grind lines
+    int offset; // painting grind offset
+    for (int i=0;i<grindVerticalCount;i++)  // painting grind loop
     {
         offset = (i*grindVerticalSpace)+frameWidth;
         painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
         if (file != 0)
-            value.number((offset/file->time())*(this->width()-AX_Y_DESC_SPACE));
+            value.setNum(((offset-frameWidth+img_offset)*file->time()/maxFFToffset),'f',3);
         else
             value = "0.0";
         painter.drawText(offset,this->height()-AX_X_DESC_SPACE+frameWidth+15,value);
@@ -136,13 +136,15 @@ inline void Plot::paint(QImage *image)
     //Horizontal
     int grindHorizontalCount = ((this->height()-AX_X_DESC_SPACE-frameWidth)/grindHorizontalSpace)+1;
     offset = this->height()-AX_X_DESC_SPACE-1;
+    int frequencyGrindOffset; // frequensy per grind line
+    if (file != 0)
+            frequencyGrindOffset = grindHorizontalSpace*file->frequency()/img->height();
+        else
+            frequencyGrindOffset = 0 ;
     for (int i=0;i<grindHorizontalCount;i++)
     {
         painter.drawLine(frameWidth,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
-        if (file != 0)
-            value.number((offset/file->frequency())*(this->height()-AX_X_DESC_SPACE));
-        else
-            value = "0.0";
+        value.setNum(i*frequencyGrindOffset);
         painter.drawText(this->width()-AX_Y_DESC_SPACE+15,offset,value);
         offset -= grindHorizontalSpace;
     }

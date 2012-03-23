@@ -120,7 +120,7 @@ QImage * ImageGenerator::plotImage(int startFFT, int stopFFT, double zoomFactor)
     fftRange.second = stopFFT;
     fftSamples = stopFFT - startFFT + 1;
     if (width < fftSamples)
-        fftSamples = width;
+        fftSamples = width - startFFT;
     QSize imgSize = QSize (zoomFactor * fftSamples, height * zoomFactor);
     img = new QImage(imgSize, QImage::Format_ARGB32);
     if (img != 0 && !img->isNull())
