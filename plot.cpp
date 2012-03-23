@@ -12,7 +12,8 @@ Plot::Plot(QWidget *parent) :
     img_empty = new QImage(100,100,QImage::Format_Mono);
     img_empty->load("empty.bmp");
     img_scene = 0;
-    img_offset = 100;
+    img_offset = 0;
+    draggingEnabled =0;
     img = 0;
     generator = 0;
 }
@@ -80,14 +81,7 @@ void Plot::paintEvent(QPaintEvent *)
 }
 void Plot::resizeEvent(QResizeEvent *)
 {
-    if (generator && !generator->isRunning())
-    {
-        delete img; img = 0; // removing old one
-        //loading img
-        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE+img_offset,1);
-    }
-    else
-        paint(img); // paint ... something .. anything ..
+    generate();
 }
 
 inline void Plot::paint(QImage *image)
@@ -159,4 +153,40 @@ inline void Plot::repaintScene() // eliminate "blinkin" if is not to offen
     //remaking scene
     delete img_scene; img_scene = 0;
     img_scene = new QImage(this->width(),this->height(),QImage::Format_ARGB32);
+}
+
+inline void Plot::generate()
+{
+    if (generator && !generator->isRunning())
+    {
+        delete img; img = 0; // removing old one
+        //loading img
+        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE+img_offset,1);
+    }
+    else
+        paint(img); // paint ... something .. anything ..
+}
+
+void Plot::mousePressEvent(QMouseEvent *e)
+{
+    oldMousePos = e->pos().x();
+    if (e->button() == Qt::LeftButton && !draggingEnabled) // enable moving plot by dragging
+        draggingEnabled = true;
+}
+
+void Plot::mouseReleaseEvent(QMouseEvent *)
+{
+    if(draggingEnabled) //disable moving plot by dragging
+        draggingEnabled = false;
+}
+
+void Plot::mouseMoveEvent(QMouseEvent *e)
+{
+    if(draggingEnabled)
+    {
+        img_offset -= e->pos().x()-oldMousePos;
+        if (img_offset <0) img_offset=0;
+        oldMousePos = e->pos().x();
+        generate();
+    }
 }
