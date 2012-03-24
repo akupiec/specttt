@@ -1,5 +1,6 @@
 #include <QDebug>
 #include <QDataStream>
+#include <QDir>
 #include "plot.h"
 #include "settings.h"
 
@@ -35,32 +36,48 @@ bool Plot::openFile(QString filePath)
     double *buffer = new double [fft.bufferSize()]; //FFT
     //setting temp file
     tempFile.setAutoRemove(false);
-    if (!tempFile.open())
+    QString tempFilePath = QDir::tempPath() + QDir::separator() + filePath.split('/').last();
+    tempFilePath = tempFilePath.left(tempFilePath.lastIndexOf('.')+1) + "fft";
+    tempFile.setFileName(tempFilePath);
+    if (!tempFile.open() || !tempFile.seek(0))
         return false;
-    tempFile.seek(0);
     QDataStream tempStream(&tempFile);
     tempStream.setVersion(12);
     //wave file
     file = new WaveFile(filePath);
     quint16 halfFFTBufferSize = fft.bufferSize() / 2;
     int samples = 2 * (int(double(file->samples()) / halfFFTBufferSize + 1.) - 1);
-    tempStream << halfFFTBufferSize << samples; // temp file header
-    for (int i=0; i<samples; i++) {
-        file->readData(buffer,fft.bufferSize(),i*halfFFTBufferSize,0);
-        fft.makeWindow(buffer);
-        fft.countFFT(buffer);
-        for (qint16 i=0; i<halfFFTBufferSize; i++) {
-            if (buffer[i] < 1.0 && buffer[i] >= 0.0)
-                tempStream << (uchar)(buffer[i]*255);
-            else
-                tempStream << (uchar)(255);
+    quint16 tempFileHeight = 0;
+    int tempFileWidth = 0;
+    if (QFile::exists(tempFilePath) && tempFile.size() > halfFFTBufferSize)
+        tempStream >> tempFileHeight >> tempFileWidth;
+    if (halfFFTBufferSize != tempFileHeight && samples != tempFileWidth)
+    {
+        if (!tempFile.remove())
+            return false;
+        tempFile.setFileName(tempFilePath);
+        if (!tempFile.open() || !tempFile.seek(0))
+            return false;
+        tempStream.setDevice(&tempFile);
+        tempStream << halfFFTBufferSize << samples; // temp file header
+        for (int i=0; i<samples; i++) {
+            file->readData(buffer,fft.bufferSize(),i*halfFFTBufferSize,0);
+            fft.makeWindow(buffer);
+            fft.countFFT(buffer);
+            for (qint16 i=0; i<halfFFTBufferSize; i++)
+            {
+                if (buffer[i] < 1.0 && buffer[i] >= 0.0)
+                    tempStream << (uchar)(buffer[i]*255);
+                else
+                    tempStream << (uchar)(255);
+            }
         }
     }
     tempFile.close();
     qDebug() << tempFile.fileName();
     file->readMarkers(&markerList);
     generator = new ImageGenerator(file, &tempFile, settings->colors(), this);
-    generator->setZoomFactor(0.3);
+    generator->setZoomFactor(0.33);
     connect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
     return true;
 }

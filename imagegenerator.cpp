@@ -61,8 +61,10 @@ QImage * ImageGenerator::plotImage(int startFFT, int stopFFT)
         d.fftSamples = width;
     QSize imgSize(d.fftSamples,height);
     d.img = new QImage(imgSize, QImage::Format_RGB32);
-    workQueue.enqueue(d);
     if (d.img != 0 && !d.img->isNull())
+    {
+        workQueue.enqueue(d);
         start();
+    }
     return d.img;
 }
