@@ -27,7 +27,7 @@ void Settings::init()
 void Settings::setColors()
 {
     beginGroup("Colors");
-    colorVector[0] = value("null","lightslategrey").value<QRgb>();
+    colorVector[0] = value("null","lightslategrey").value<QColor>().rgb();
     QLinearGradient gradient(0,0,253,0);
     gradient.setColorAt(0.0, value("start","coral").value<QColor>());
     gradient.setColorAt(1.0, value("stop","moccasin").value<QColor>());
@@ -37,7 +37,7 @@ void Settings::setColors()
 //    image.save("gradient.bmp");
     for (int x=0; x<image.width(); x++)
         colorVector[x+1] = image.pixel(x,0);
-    colorVector[255] = value("overflow","lime").value<QRgb>();
+    colorVector[255] = value("overflow","lime").value<QColor>().rgb();
     endGroup();
 }
 

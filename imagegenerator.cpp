@@ -56,7 +56,7 @@ void ImageGenerator::run()
                     fftData->read(&data,1); // read pixel data from FFT temp file
                     uData = data;
                     if (data < 0)
-                        uData += 0xff; // signed to unsigned int range 0-255
+                        uData += 256; // signed to unsigned int range 0-255
                     if(img && !img->isNull())
                         img->setPixel(x,y,colors->at(uData)); // set pixel color
                 }
