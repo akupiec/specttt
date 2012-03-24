@@ -43,7 +43,7 @@ bool Plot::openFile(QString filePath)
     //wave file
     file = new WaveFile(filePath);
     quint16 halfFFTBufferSize = fft.bufferSize() / 2;
-    int samples = file->samples() / halfFFTBufferSize + 1;
+    int samples = 2 * (int(double(file->samples()) / halfFFTBufferSize + 1.) - 1);
     tempStream << halfFFTBufferSize << samples; // temp file header
     for (int i=0; i<samples; i++) {
         file->readData(buffer,fft.bufferSize(),i*halfFFTBufferSize,0);
@@ -60,7 +60,7 @@ bool Plot::openFile(QString filePath)
     qDebug() << tempFile.fileName();
     file->readMarkers(&markerList);
     generator = new ImageGenerator(file, &tempFile, settings->colors(), this);
-    generator->setZoomFactor(1.0);
+    generator->setZoomFactor(0.3);
     connect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
     return true;
 }
@@ -71,7 +71,7 @@ void Plot::imageGenerated()
     if (img_scene->size() != this->size())
     {
         repaintScene();
-        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-img_offset);
+        img = generator->plotImage(img_offset,(this->width()-AX_Y_DESC_SPACE-img_offset)/generator->zoomFactor());
     }
 }
 
@@ -86,7 +86,7 @@ void Plot::paintEvent(QPaintEvent *)
 void Plot::resizeEvent(QResizeEvent *)
 {
     if (generator)
-        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-img_offset);
+        img = generator->plotImage(img_offset,(this->width()-AX_Y_DESC_SPACE-img_offset)/generator->zoomFactor());
     else
         paint(img); // paint ... something .. anything ..
 }
