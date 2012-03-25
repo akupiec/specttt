@@ -126,8 +126,8 @@ QImage * ImageGenerator::plotImage(int startFFT, int stopFFT)
     d.fftRange.first = startFFT;
     d.fftRange.second = stopFFT;
     d.fftSamples = stopFFT - startFFT + 1;
-    if (width < d.fftSamples)
-        d.fftSamples = width;
+    if (width < stopFFT)
+        d.fftSamples = width - startFFT;
     QSize imgSize = QSize (zoomFactor_ * d.fftSamples, height * zoomFactor_);
     d.img = new QImage(imgSize, QImage::Format_ARGB32);
     workQueue.enqueue(d);

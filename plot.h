@@ -6,11 +6,11 @@
 #include <QDataStream>
 #include <QTemporaryFile>
 #include <QPainter>
+#include <QMouseEvent>
 #include "wavefile.h"
 #include "fft.h"
 #include "markers.h"
 #include "imagegenerator.h"
-#include <QQueue>
 
 
 //klasa jest odpowiedzialna za koordynacje danych miêdzy wavefile a fft
@@ -51,14 +51,21 @@ private:
     QImage *img_empty;
     QImage *img_scene;
     QImage *img;
-    int img_offset; // the same as FFT_offset
     ImageGenerator *generator;
-    QQueue<QImage*> queue;
+    inline void generate();
 
     //config
     static const int frameWidth = 2;
     static const int grindVerticalSpace = 40;
     static const int grindHorizontalSpace = 20;
+
+    //moving
+    int img_offset; // the same as FFT_offset
+    bool draggingEnabled;
+    virtual void mousePressEvent(QMouseEvent *);
+    virtual void mouseReleaseEvent(QMouseEvent *);
+    virtual void mouseMoveEvent(QMouseEvent *);
+    int oldMousePos; //used only in mose move event
 
 
 public:
@@ -66,6 +73,7 @@ public:
     WaveFile *file; // wave file object
     QVector<Markers> markerList; // markers list object
     QTemporaryFile tempFile; // plot data temporary file
+    int maxFFToffset; // amout of fft samples
 };
 
 #endif // PLOT_H

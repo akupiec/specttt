@@ -13,6 +13,7 @@ Plot::Plot(QWidget *parent) :
     img_empty->load("empty.bmp");
     img_scene = 0;
     img_offset = 0;
+    draggingEnabled =0;
     img = 0;
     generator = 0;
 }
@@ -39,9 +40,9 @@ bool Plot::openFile(QString filePath)
     //wave file
     file = new WaveFile(filePath);
     quint16 halfFFTBufferSize = fft.bufferSize() / 2;
-    int samples = file->samples() / halfFFTBufferSize + 1;
-    tempStream << halfFFTBufferSize << samples; // temp file header
-    for (int i=0; i<samples; i++) {
+    maxFFToffset = file->samples() / halfFFTBufferSize + 1;
+    tempStream << halfFFTBufferSize << maxFFToffset; // temp file header
+    for (int i=0; i<maxFFToffset; i++) {
         file->readData(buffer,fft.bufferSize(),i*halfFFTBufferSize,0);
         fft.makeWindow(buffer);
         fft.countFFT(buffer);
@@ -67,7 +68,7 @@ void Plot::imageGenerated()
     if (img_scene->size() != this->size())
     {
         repaintScene();
-        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-img_offset);
+        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-frameWidth);
     }
 }
 
@@ -81,10 +82,7 @@ void Plot::paintEvent(QPaintEvent *)
 }
 void Plot::resizeEvent(QResizeEvent *)
 {
-    if (generator)
-        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-img_offset);
-    else
-        paint(img); // paint ... something .. anything ..
+    generate();
 }
 
 inline void Plot::paint(QImage *image)
@@ -118,14 +116,14 @@ inline void Plot::paint(QImage *image)
     //Veritical
     painter.setPen(QPen(QBrush(Qt::white),1,Qt::DotLine));
     QString value;
-    int grindVerticalCount = ((this->width()-AX_Y_DESC_SPACE-frameWidth)/grindVerticalSpace)+1;
-    int offset;
-    for (int i=0;i<grindVerticalCount;i++)
+    int grindVerticalCount = ((this->width()-AX_Y_DESC_SPACE-frameWidth)/grindVerticalSpace)+1; //amout of grind lines
+    int offset; // painting grind offset
+    for (int i=0;i<grindVerticalCount;i++)  // painting grind loop
     {
         offset = (i*grindVerticalSpace)+frameWidth;
         painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
         if (file != 0)
-            value.number((offset/file->time())*(this->width()-AX_Y_DESC_SPACE));
+            value.setNum(((offset-frameWidth+img_offset)*file->time()/maxFFToffset),'f',3);
         else
             value = "0.0";
         painter.drawText(offset,this->height()-AX_X_DESC_SPACE+frameWidth+15,value);
@@ -133,13 +131,15 @@ inline void Plot::paint(QImage *image)
     //Horizontal
     int grindHorizontalCount = ((this->height()-AX_X_DESC_SPACE-frameWidth)/grindHorizontalSpace)+1;
     offset = this->height()-AX_X_DESC_SPACE-1;
+    int frequencyGrindOffset; // frequensy per grind line
+    if (file != 0)
+            frequencyGrindOffset = grindHorizontalSpace*file->frequency()/img->height();
+        else
+            frequencyGrindOffset = 0 ;
     for (int i=0;i<grindHorizontalCount;i++)
     {
         painter.drawLine(frameWidth,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
-        if (file != 0)
-            value.number((offset/file->frequency())*(this->height()-AX_X_DESC_SPACE));
-        else
-            value = "0.0";
+        value.setNum(i*frequencyGrindOffset);
         painter.drawText(this->width()-AX_Y_DESC_SPACE+15,offset,value);
         offset -= grindHorizontalSpace;
     }
@@ -154,4 +154,36 @@ inline void Plot::repaintScene() // eliminate "blinkin" if is not to offen
     //remaking scene
     delete img_scene; img_scene = 0;
     img_scene = new QImage(this->width(),this->height(),QImage::Format_ARGB32);
+}
+
+inline void Plot::generate()
+{
+    if (generator)
+        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-img_offset);
+    else
+        paint(img); // paint ... something .. anything ..
+}
+
+void Plot::mousePressEvent(QMouseEvent *e)
+{
+    oldMousePos = e->pos().x();
+    if (e->button() == Qt::LeftButton && !draggingEnabled) // enable moving plot by dragging
+        draggingEnabled = true;
+}
+
+void Plot::mouseReleaseEvent(QMouseEvent *)
+{
+    if(draggingEnabled) //disable moving plot by dragging
+        draggingEnabled = false;
+}
+
+void Plot::mouseMoveEvent(QMouseEvent *e)
+{
+    if(draggingEnabled)
+    {
+        img_offset -= e->pos().x()-oldMousePos;
+        if (img_offset <0) img_offset=0;
+        oldMousePos = e->pos().x();
+        generate();
+    }
 }
