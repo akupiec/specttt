@@ -60,7 +60,7 @@ private:
     static const int frameWidth = 2;
     static const int grindVerticalSpace = 40;
     static const int grindHorizontalSpace = 20;
-    static const int generateImgBuffor = 100;
+    static const int generateImgBuffor = 50;
 
     //moving
     int img_offset; // the same as FFT_offset

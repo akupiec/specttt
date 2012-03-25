@@ -83,7 +83,6 @@ void Plot::paintEvent(QPaintEvent *)
     if (img)
     {
         //background
-        painter.begin(img_scene);
         painter.setBrush(Qt::black);
         painter.drawRect(0,0,this->width(),this->height());
 
@@ -152,10 +151,10 @@ inline void Plot::generate()
 {
     if (generator)
     {
-        qDebug() << "generated << " << img_genrated_offset;
+        qDebug() <<"GENERATED " << img_offset;
         img_genrated_offset = img_offset;
-        img = generator->plotImage(img_genrated_offset-generateImgBuffor,this->width()-AX_Y_DESC_SPACE+img_genrated_offset+generateImgBuffor);
-        //img = generator->plotImage(0,maxFFToffset);
+        img = generator->plotImage(img_genrated_offset-generateImgBuffor,this->width()-AX_Y_DESC_SPACE+img_genrated_offset+2*generateImgBuffor);
+        qDebug() << "generated offset << " << img_genrated_offset;
     }    
 }
 
@@ -178,13 +177,15 @@ void Plot::mouseMoveEvent(QMouseEvent *e)
     {
         img_offset -= e->pos().x()-oldMousePos;
         if (img_offset <0) img_offset=0;
-        oldMousePos = e->pos().x();
-        qDebug() << img_offset << abs(img_offset-img_genrated_offset);
         if(abs(img_offset-img_genrated_offset) > generateImgBuffor)
         {
             generate();
-            img_offset -= generateImgBuffor;
+            if(oldMousePos > e->pos().x())
+                img_offset -= generateImgBuffor;
+            else
+                img_offset += generateImgBuffor;
         }
+        oldMousePos = e->pos().x();
         this->update();
     }
 }
