@@ -123,11 +123,6 @@ void ImageGenerator::run()
 QImage * ImageGenerator::plotImage(int startFFT, int stopFFT)
 {
     ImageData d;
-    if(startFFT <0)
-    {
-        qDebug() << "TUATJ BLAD";
-        startFFT =0;
-    }
     d.fftRange.first = startFFT;
     d.fftRange.second = stopFFT;
     d.fftSamples = stopFFT - startFFT + 1;

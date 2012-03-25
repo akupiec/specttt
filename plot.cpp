@@ -13,6 +13,7 @@ Plot::Plot(QWidget *parent) :
     img_empty->load("empty.bmp");
     img_scene = 0;
     img_offset = 0;
+    img_move_offset = 0;
     draggingEnabled =0;
     img = 0;
     generator = 0;
@@ -67,7 +68,6 @@ bool Plot::openFile(QString filePath)
 
 void Plot::imageGenerated()
 {
-    qDebug() << "generating finished";
     this->update();
     if (img_scene->size() != this->size())
     {
@@ -87,7 +87,13 @@ void Plot::paintEvent(QPaintEvent *)
         painter.drawRect(0,0,this->width(),this->height());
 
         //painting image
-        painter.drawImage(frameWidth-img_offset,this->height()-AX_X_DESC_SPACE-frameWidth-img->height(),*img);
+        qDebug() << "x" << img_offset << img_offset%generateImgBuffor << img_offset/generateImgBuffor;
+        if(img_offset/generateImgBuffor != img_move_offset)
+        {
+            generate();
+            img_move_offset = img_offset/generateImgBuffor;
+        }
+        painter.drawImage(frameWidth-(img_offset%generateImgBuffor),this->height()-AX_X_DESC_SPACE-frameWidth-img->height(),*img);
 
         //axis background
         painter.drawRect(this->width()-AX_Y_DESC_SPACE,0,AX_Y_DESC_SPACE,this->height()); // background for axis Y
@@ -151,10 +157,8 @@ inline void Plot::generate()
 {
     if (generator)
     {
-        qDebug() <<"GENERATED " << img_offset;
-        img_genrated_offset = img_offset;
-        img = generator->plotImage(img_genrated_offset-generateImgBuffor,this->width()-AX_Y_DESC_SPACE+img_genrated_offset+2*generateImgBuffor);
-        qDebug() << "generated offset << " << img_genrated_offset;
+        qDebug() << "generated in" << (img_offset/generateImgBuffor)*generateImgBuffor;
+        img = generator->plotImage((img_offset/generateImgBuffor)*generateImgBuffor,this->width()-AX_Y_DESC_SPACE+img_offset+4*generateImgBuffor);
     }    
 }
 
@@ -176,15 +180,8 @@ void Plot::mouseMoveEvent(QMouseEvent *e)
     if(draggingEnabled)
     {
         img_offset -= e->pos().x()-oldMousePos;
-        if (img_offset <0) img_offset=0;
-        if(abs(img_offset-img_genrated_offset) > generateImgBuffor)
-        {
-            generate();
-            if(oldMousePos > e->pos().x())
-                img_offset -= generateImgBuffor;
-            else
-                img_offset += generateImgBuffor;
-        }
+        if (img_offset <0)
+            img_offset=0;
         oldMousePos = e->pos().x();
         this->update();
     }

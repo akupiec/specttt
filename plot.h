@@ -54,7 +54,6 @@ private:
     //generating
     ImageGenerator *generator;
     inline void generate();
-    int img_genrated_offset;
 
     //config
     static const int frameWidth = 2;
@@ -64,6 +63,7 @@ private:
 
     //moving
     int img_offset; // the same as FFT_offset
+    int img_move_offset;
     bool draggingEnabled;
     virtual void mousePressEvent(QMouseEvent *);
     virtual void mouseReleaseEvent(QMouseEvent *);
