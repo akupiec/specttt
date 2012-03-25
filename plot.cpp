@@ -59,11 +59,16 @@ bool Plot::openFile(QString filePath)
     generator = new ImageGenerator(file, &tempFile, this);
     generator->setZoomFactor(1.0);
     connect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
+
+    repaintScene();
+    generate();
+
     return true;
 }
 
 void Plot::imageGenerated()
 {
+    qDebug() << "generating finished";
     paint(img);
     if (img_scene->size() != this->size())
     {
@@ -81,13 +86,13 @@ void Plot::paintEvent(QPaintEvent *)
 
 }
 void Plot::resizeEvent(QResizeEvent *)
-{
+{    
+    repaintScene();
     generate();
 }
 
 inline void Plot::paint(QImage *image)
 {
-    repaintScene();
 
     QPainter painter;
 
@@ -101,7 +106,7 @@ inline void Plot::paint(QImage *image)
     painter.drawRect(0,0,this->width(),this->height());
 
     //painting image
-    painter.drawImage(frameWidth,this->height()-AX_X_DESC_SPACE-frameWidth-image->height(),*image);
+    painter.drawImage(frameWidth-img_offset,this->height()-AX_X_DESC_SPACE-frameWidth-image->height(),*image);
 
     //axis background
     painter.drawRect(this->width()-AX_Y_DESC_SPACE,0,AX_Y_DESC_SPACE,this->height()); // background for axis Y
@@ -112,44 +117,44 @@ inline void Plot::paint(QImage *image)
     painter.setBrush(Qt::NoBrush);
     painter.drawRect(frameWidth/2,frameWidth/2,this->width()-AX_Y_DESC_SPACE,this->height()-AX_X_DESC_SPACE);
 
-    //grind & values
-    //Veritical
-    painter.setPen(QPen(QBrush(Qt::white),1,Qt::DotLine));
-    QString value;
-    int grindVerticalCount = ((this->width()-AX_Y_DESC_SPACE-frameWidth)/grindVerticalSpace)+1; //amout of grind lines
-    int offset; // painting grind offset
-    for (int i=0;i<grindVerticalCount;i++)  // painting grind loop
-    {
-        offset = (i*grindVerticalSpace)+frameWidth;
-        painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
-        if (file != 0)
-            value.setNum(((offset-frameWidth+img_offset)*file->time()/maxFFToffset),'f',3);
-        else
-            value = "0.0";
-        painter.drawText(offset,this->height()-AX_X_DESC_SPACE+frameWidth+15,value);
-    }
-    //Horizontal
-    int grindHorizontalCount = ((this->height()-AX_X_DESC_SPACE-frameWidth)/grindHorizontalSpace)+1;
-    offset = this->height()-AX_X_DESC_SPACE-1;
-    int frequencyGrindOffset; // frequensy per grind line
-    if (file != 0)
-            frequencyGrindOffset = grindHorizontalSpace*file->frequency()/img->height();
-        else
-            frequencyGrindOffset = 0 ;
-    for (int i=0;i<grindHorizontalCount;i++)
-    {
-        painter.drawLine(frameWidth,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
-        value.setNum(i*frequencyGrindOffset);
-        painter.drawText(this->width()-AX_Y_DESC_SPACE+15,offset,value);
-        offset -= grindHorizontalSpace;
-    }
+//    //grind & values
+//    //Veritical
+//    painter.setPen(QPen(QBrush(Qt::white),1,Qt::DotLine));
+//    QString value;
+//    int grindVerticalCount = ((this->width()-AX_Y_DESC_SPACE-frameWidth)/grindVerticalSpace)+1; //amout of grind lines
+//    int offset; // painting grind offset
+//    for (int i=0;i<grindVerticalCount;i++)  // painting grind loop
+//    {
+//        offset = (i*grindVerticalSpace)+frameWidth;
+//        painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
+//        if (file != 0)
+//            value.setNum(((offset-frameWidth+img_offset)*file->time()/maxFFToffset),'f',3);
+//        else
+//            value = "0.0";
+//        painter.drawText(offset,this->height()-AX_X_DESC_SPACE+frameWidth+15,value);
+//    }
+//    //Horizontal
+//    int grindHorizontalCount = ((this->height()-AX_X_DESC_SPACE-frameWidth)/grindHorizontalSpace)+1;
+//    offset = this->height()-AX_X_DESC_SPACE-1;
+//    int frequencyGrindOffset; // frequensy per grind line
+//    if (file != 0)
+//            frequencyGrindOffset = grindHorizontalSpace*file->frequency()/img->height();
+//        else
+//            frequencyGrindOffset = 0 ;
+//    for (int i=0;i<grindHorizontalCount;i++)
+//    {
+//        painter.drawLine(frameWidth,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
+//        value.setNum(i*frequencyGrindOffset);
+//        painter.drawText(this->width()-AX_Y_DESC_SPACE+15,offset,value);
+//        offset -= grindHorizontalSpace;
+//    }
 
     //ending
     painter.end();
     this->update();
 }
 
-inline void Plot::repaintScene() // eliminate "blinkin" if is not to offen
+inline void Plot::repaintScene() // eliminate "blinking" if is not called to offen
 {
     //remaking scene
     delete img_scene; img_scene = 0;
@@ -159,9 +164,16 @@ inline void Plot::repaintScene() // eliminate "blinkin" if is not to offen
 inline void Plot::generate()
 {
     if (generator)
-        img = generator->plotImage(img_offset,this->width()-AX_Y_DESC_SPACE-img_offset);
+    {
+        img_genrated_offset = img_offset+generateImgBuffor;
+        int img_startFFT = img_offset-generateImgBuffor;
+        if(img_startFFT > 0) img_startFFT =0;
+        if(img_startFFT < maxFFToffset)
+            img = generator->plotImage(img_startFFT,this->width()-AX_Y_DESC_SPACE-img_offset+generateImgBuffor);
+        qDebug() << "generated << " << img_genrated_offset;
+    }
     else
-        paint(img); // paint ... something .. anything ..
+        paint(img_empty); // paint ... something .. anything ..
 }
 
 void Plot::mousePressEvent(QMouseEvent *e)
@@ -184,6 +196,9 @@ void Plot::mouseMoveEvent(QMouseEvent *e)
         img_offset -= e->pos().x()-oldMousePos;
         if (img_offset <0) img_offset=0;
         oldMousePos = e->pos().x();
-        generate();
+        qDebug() << img_offset<<  "-" << img_genrated_offset << "= " << abs(img_offset-img_genrated_offset);
+        if(abs(img_offset-img_genrated_offset) > generateImgBuffor)
+            generate();
+        paint(img);
     }
 }

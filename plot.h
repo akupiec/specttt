@@ -51,13 +51,17 @@ private:
     QImage *img_empty;
     QImage *img_scene;
     QImage *img;
+
+    //generating
     ImageGenerator *generator;
     inline void generate();
+    int img_genrated_offset;
 
     //config
     static const int frameWidth = 2;
     static const int grindVerticalSpace = 40;
     static const int grindHorizontalSpace = 20;
+    static const int generateImgBuffor = 300;
 
     //moving
     int img_offset; // the same as FFT_offset
