@@ -10,6 +10,9 @@
 #include "wavefile.h"
 #include "fft.h"
 #include "markers.h"
+#include "imagegenerator.h"
+
+class Settings;
 
 //klasa jest odpowiedzialna za koordynacje danych miêdzy wavefile a fft
 //jest to klasa odpowiedzialna za rysowanie wykresu*   ///// ja by to i tak wywali³ o osobnej ³atwiej bêdzie nawigowaæ danymi nie pogubimy sie co dlaczego i gdzie
@@ -30,7 +33,8 @@ public:
 
 signals:
 
-public slots:
+private slots:
+    void imageGenerated();
 
 private:
     // returning file offset counted form X posision on plot
@@ -39,28 +43,42 @@ private:
     int fileOffsetToXAX(int fileOffset);
 
     //Painting
+    inline void repaintScene();
+    inline void generateNewImg(QSize size);
     virtual void paintEvent(QPaintEvent *);
     virtual void resizeEvent(QResizeEvent *);
-    QPainter painter;
+    //QPainter painter;
     QImage *img_empty;
     QImage *img_scene;
-    QVector<QImage*> img;
+    QImage *img;
+
+    //generating
+    ImageGenerator *generator;
+    inline void generate();
+
+    //config
+    static const int frameWidth = 2;
+    static const int grindVerticalSpace = 40;
+    static const int grindHorizontalSpace = 20;
+    static const int generateImgBuffor = 50;
 
     //moving
     int img_offset; // the same as FFT_offset
+    int img_move_offset;
     bool draggingEnabled;
     virtual void mousePressEvent(QMouseEvent *);
     virtual void mouseReleaseEvent(QMouseEvent *);
     virtual void mouseMoveEvent(QMouseEvent *);
     int oldMousePos; //used only in mose move event
 
+
+public:
     //File data objects
     WaveFile *file; // wave file object
     QVector<Markers> markerList; // markers list object
     QTemporaryFile tempFile; // plot data temporary file
+    Settings *settings; // plot settings object
     int maxFFToffset;
-    int halfFFTBufferSize;
-
 
 };
 

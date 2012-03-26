@@ -15,15 +15,23 @@ SOURCES += main.cpp\
     wavefile.cpp \
     fft.cpp \
     plot.cpp \
-    markers.cpp
+    markers.cpp \
+    imagegenerator.cpp \
+    settings.cpp
 
 HEADERS  += mainwindow.h \
     wavefile.h \
     fft.h \
     plot.h \
-    markers.h
+    markers.h \
+    imagegenerator.h \
+    cyclicqueue.h \
+    settings.h
 
 FORMS    += mainwindow.ui
+
+OTHER_FILES += \
+    TODO
 
 
 
