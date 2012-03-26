@@ -157,8 +157,9 @@ inline void Plot::generate()
 {
     if (generator)
     {
-        qDebug() << "generated in" << (img_offset/generateImgBuffor)*generateImgBuffor;
-        img = generator->plotImage((img_offset/generateImgBuffor)*generateImgBuffor,this->width()-AX_Y_DESC_SPACE+img_offset+4*generateImgBuffor);
+        int start_from = (img_offset/generateImgBuffor)*generateImgBuffor;
+        if(start_from<maxFFToffset) // correction of crash at max start_from  //TO CORRECT
+            img = generator->plotImage(start_from,this->width()-AX_Y_DESC_SPACE+start_from+2*generateImgBuffor);
     }    
 }
 
