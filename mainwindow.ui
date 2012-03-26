@@ -53,6 +53,7 @@
      <string>Test</string>
     </property>
     <addaction name="actionImageGenerator"/>
+    <addaction name="actionBeep_detect"/>
    </widget>
    <addaction name="menuTest"/>
   </widget>
@@ -71,6 +72,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+G</string>
+   </property>
+  </action>
+  <action name="actionBeep_detect">
+   <property name="text">
+    <string>Beep detect</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
    </property>
   </action>
  </widget>
