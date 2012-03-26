@@ -46,8 +46,8 @@ void ImageGenerator::run()
         }
         *img = img->scaled(zoomFactor_*img->width(), zoomFactor_*img->height(),
                            Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        qDebug() << fftSamples << zoomFactor_ << img->size() << width;
-        qDebug() << "Time:" << time.elapsed();
+        //qDebug() << fftSamples << zoomFactor_ << img->size() << width;
+        qDebug() << "Time:" << time.elapsed() << fftRange.first << img->width() << fftSamples;
     }
 }
 
@@ -57,8 +57,8 @@ QImage * ImageGenerator::plotImage(int startFFT, int stopFFT)
     d.fftRange.first = startFFT;
     d.fftRange.second = stopFFT;
     d.fftSamples = stopFFT - startFFT + 1;
-    if (width < d.fftSamples)
-        d.fftSamples = width;
+    if (width < stopFFT)
+        d.fftSamples = width - startFFT;
     QSize imgSize(d.fftSamples,height);
     d.img = new QImage(imgSize, QImage::Format_RGB32);
     if (d.img != 0 && !d.img->isNull())

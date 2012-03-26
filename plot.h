@@ -6,7 +6,7 @@
 #include <QDataStream>
 #include <QTemporaryFile>
 #include <QPainter>
-#include <QQueue>
+#include <QMouseEvent>
 #include "wavefile.h"
 #include "fft.h"
 #include "markers.h"
@@ -43,7 +43,6 @@ private:
     int fileOffsetToXAX(int fileOffset);
 
     //Painting
-    inline void paint(QImage *image = 0);
     inline void repaintScene();
     inline void generateNewImg(QSize size);
     virtual void paintEvent(QPaintEvent *);
@@ -52,14 +51,25 @@ private:
     QImage *img_empty;
     QImage *img_scene;
     QImage *img;
-    int img_offset; // the same as FFT_offset
+
+    //generating
     ImageGenerator *generator;
-    QQueue<QImage*> queue;
+    inline void generate();
 
     //config
     static const int frameWidth = 2;
     static const int grindVerticalSpace = 40;
     static const int grindHorizontalSpace = 20;
+    static const int generateImgBuffor = 50;
+
+    //moving
+    int img_offset; // the same as FFT_offset
+    int img_move_offset;
+    bool draggingEnabled;
+    virtual void mousePressEvent(QMouseEvent *);
+    virtual void mouseReleaseEvent(QMouseEvent *);
+    virtual void mouseMoveEvent(QMouseEvent *);
+    int oldMousePos; //used only in mose move event
 
 
 public:
@@ -68,6 +78,8 @@ public:
     QVector<Markers> markerList; // markers list object
     QTemporaryFile tempFile; // plot data temporary file
     Settings *settings; // plot settings object
+    int maxFFToffset;
+
 };
 
 #endif // PLOT_H
