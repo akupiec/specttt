@@ -82,18 +82,12 @@ bool Plot::openFile(QString filePath)
 
     img_nr = 0;
     generate(img_nr,0);
-
     return true;
 }
 
 void Plot::imageGenerated()
 {
     this->update();
-//    if (img_scene->size() != this->size())
-//    {
-//        repaintScene();
-//        generate();
-//    }
 }
 
 void Plot::paintEvent(QPaintEvent *)
@@ -107,41 +101,12 @@ void Plot::paintEvent(QPaintEvent *)
         painter.drawRect(0,0,this->width(),this->height());
 
         //painting image
-        if(img_offset%img_realWidth > generateImgBuffor*0.70 && img_offset%img_realWidth < generateImgBuffor*0.80)
-        {
-            qDebug() << "generacja do przodu";
-            generate(!img_nr,(img_offset/img_realWidth)+1);
-        }
-        if(img_offset%img_realWidth > generateImgBuffor*0.20 && img_offset%img_realWidth < generateImgBuffor*0.30)
-        {
-            qDebug() << "generacja wsteczna";
-            generate(!img_nr,(img_offset/img_realWidth)-1);
-        }
-        if((img_offset/img_realWidth)%2 ==0 )
-        {
-            img_nr = 0;
-        }
-        else
-            img_nr = 1;
 
-//        QImage * image = 0;
-//        QImage * image1 = 0;
-//        if (!img_nr)
-//        {
-//            image = img0;
-//            image1 = img1;
-//        }
-//        else
-//            image = img1;
-//            image1 = img0;
-//        if(image)
-//            painter.drawImage(frameWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*image);
-//        if(image1)
-        //            painter.drawImage(frameWidth+img_realWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*image1);
         if (!img_nr)
         {
             painter.drawImage(frameWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img0);
-            if(img1)
+            if(!img1 || img1->isNull())
+                generate(!img_nr);
             painter.drawImage(frameWidth+img_realWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img1);
         }
         else
@@ -149,7 +114,6 @@ void Plot::paintEvent(QPaintEvent *)
             painter.drawImage(frameWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img1);
             painter.drawImage(frameWidth+img_realWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img0);
         }
-        qDebug() << "painted:" << img_nr << img_offset << img_offset%img_realWidth << (generateImgBuffor*0.75);
         //axis background
         painter.drawRect(this->width()-AX_Y_DESC_SPACE,0,AX_Y_DESC_SPACE,this->height()); // background for axis Y
         painter.drawRect(0,this->height()-AX_X_DESC_SPACE,this->width(),AX_X_DESC_SPACE); // background for axis
@@ -198,8 +162,9 @@ void Plot::paintEvent(QPaintEvent *)
 void Plot::resizeEvent(QResizeEvent *)
 {    
     repaintScene();
-    img_realWidth = (int)((this->width()-AX_Y_DESC_SPACE-frameWidth+generateImgBuffor)*imgZoom);
-    generate();
+    img_realWidth = (int)((this->width()-AX_Y_DESC_SPACE-frameWidth+generateImgBuffor));
+    img_nr = 0;
+    generate(img_nr,0);
 }
 
 inline void Plot::repaintScene() // eliminate "blinking" if is not called to offen
@@ -215,9 +180,9 @@ inline void Plot::generate(bool nr, int offset)
     {
         qDebug() << "generated: " << nr << "in" << offset << img_offset;
         if(!nr)
-            img0 = generator->plotImage(offset*img_realWidth,(offset+1)*img_realWidth);
+            img0 = generator->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom);
         else
-            img1 = generator->plotImage(offset*img_realWidth,(offset+1)*img_realWidth);
+            img1 = generator->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom);
     }
 }
 
@@ -241,6 +206,26 @@ void Plot::mouseMoveEvent(QMouseEvent *e)
         img_offset -= e->pos().x()-oldMousePos;
         if (img_offset <0)
             img_offset=0;
+
+
+        if(img_offset%img_realWidth == (int)(generateImgBuffor*0.75))
+        {
+            qDebug() << "generacja do przodu";
+            generate(!img_nr,(img_offset/img_realWidth)+1);
+        }
+        if(img_offset%img_realWidth > generateImgBuffor*0.20 && img_offset%img_realWidth < generateImgBuffor*0.30)
+        {
+            qDebug() << "generacja wsteczna";
+            generate(!img_nr,(img_offset/img_realWidth)-1);
+        }
+        if((img_offset/img_realWidth)%2 == 0 )
+        {
+            img_nr = 0;
+        }
+        else
+            img_nr = 1;
+        qDebug() << "painted:" << img_nr << img_offset << img_offset%img_realWidth << (generateImgBuffor*0.75);
+
         oldMousePos = e->pos().x();
         this->update();
     }

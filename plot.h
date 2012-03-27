@@ -63,17 +63,15 @@ private:
     static const int grindVerticalSpace = 40;
     static const int grindHorizontalSpace = 20;
     static const int generateImgBuffor = 200;
-    static const float imgZoom = 0.5;
+    static const float imgZoom = 4.5;
 
     //moving
     int img_offset; // the same as FFT_offset
-//    int img_move_offset;
     bool draggingEnabled;
     virtual void mousePressEvent(QMouseEvent *);
     virtual void mouseReleaseEvent(QMouseEvent *);
     virtual void mouseMoveEvent(QMouseEvent *);
     int oldMousePos; //used only in mose move event
-
 
 public:
     //File data objects
