@@ -47,8 +47,6 @@ private:
     inline void generateNewImg(QSize size);
     virtual void paintEvent(QPaintEvent *);
     virtual void resizeEvent(QResizeEvent *);
-//    QImage *img_empty;
-//    QImage *img_scene;
     QImage *img0;
     QImage *img1;
     int img_realWidth;
@@ -57,13 +55,14 @@ private:
     ImageGenerator *generator;
     inline void generate(bool img_nr = 0, int offset = 0);
     bool img_nr;
+    int last_generated_offset;
 
     //config
     static const int frameWidth = 2;
     static const int grindVerticalSpace = 40;
     static const int grindHorizontalSpace = 20;
-    static const int generateImgBuffor = 200;
-    static const float imgZoom = 4.5;
+    static const int generateImgBuffor = 100;
+    static const float imgZoom = 1.33;
 
     //moving
     int img_offset; // the same as FFT_offset

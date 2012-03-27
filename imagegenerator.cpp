@@ -46,8 +46,7 @@ void ImageGenerator::run()
         }
         *img = img->scaled(zoomFactor_*img->width(), zoomFactor_*img->height(),
                            Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        //qDebug() << fftSamples << zoomFactor_ << img->size() << width;
-        qDebug() << "Time:" << time.elapsed() << fftRange.first << img->width() << fftSamples;
+        //qDebug() << "Time:" << time.elapsed() << fftRange.first << img->width() << fftSamples;
     }
 }
 
