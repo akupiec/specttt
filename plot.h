@@ -47,24 +47,27 @@ private:
     inline void generateNewImg(QSize size);
     virtual void paintEvent(QPaintEvent *);
     virtual void resizeEvent(QResizeEvent *);
-    //QPainter painter;
-    QImage *img_empty;
-    QImage *img_scene;
-    QImage *img;
+//    QImage *img_empty;
+//    QImage *img_scene;
+    QImage *img0;
+    QImage *img1;
+    int img_realWidth;
 
     //generating
     ImageGenerator *generator;
-    inline void generate();
+    inline void generate(bool img_nr = 0, int offset = 0);
+    bool img_nr;
 
     //config
     static const int frameWidth = 2;
     static const int grindVerticalSpace = 40;
     static const int grindHorizontalSpace = 20;
-    static const int generateImgBuffor = 50;
+    static const int generateImgBuffor = 200;
+    static const float imgZoom = 0.5;
 
     //moving
     int img_offset; // the same as FFT_offset
-    int img_move_offset;
+//    int img_move_offset;
     bool draggingEnabled;
     virtual void mousePressEvent(QMouseEvent *);
     virtual void mouseReleaseEvent(QMouseEvent *);

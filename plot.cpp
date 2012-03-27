@@ -12,13 +12,11 @@ Plot::Plot(QWidget *parent) :
     QWidget(parent)
 {
     file = 0;
-    //img_empty = new QImage(100,100,QImage::Format_Mono);
-    //img_empty->load("empty.bmp");
-    img_scene = 0;
     img_offset = 0;
-    img_move_offset = 0;
     draggingEnabled =0;
-    img = 0;
+    img0 = 0;
+    img1 = 0;
+    img_nr = 0;
     generator = 0;
     settings = new Settings(SPECT_PROJECT_NAME);
 }
@@ -26,8 +24,8 @@ Plot::Plot(QWidget *parent) :
 Plot::~Plot()
 {
     delete file; file = 0;
-    delete img_empty; img_empty = 0;
-    delete img; img = 0;
+    delete img0; img0 = 0;
+    delete img1; img1 = 0;
     delete generator; generator = 0;
     delete settings;
 }
@@ -79,10 +77,11 @@ bool Plot::openFile(QString filePath)
     qDebug() << tempFile.fileName();
     file->readMarkers(&markerList);
     generator = new ImageGenerator(file, &tempFile, settings->colors(), this);
-    generator->setZoomFactor(0.5);
+    generator->setZoomFactor(imgZoom);
     connect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
 
-    generate();
+    img_nr = 0;
+    generate(img_nr,0);
 
     return true;
 }
@@ -90,32 +89,67 @@ bool Plot::openFile(QString filePath)
 void Plot::imageGenerated()
 {
     this->update();
-    if (img_scene->size() != this->size())
-    {
-        repaintScene();
-        generate();
-    }
+//    if (img_scene->size() != this->size())
+//    {
+//        repaintScene();
+//        generate();
+//    }
 }
 
 void Plot::paintEvent(QPaintEvent *)
 {
     QPainter painter;
     painter.begin(this);
-    if (img)
+    if (img0)
     {
         //background
         painter.setBrush(Qt::black);
         painter.drawRect(0,0,this->width(),this->height());
 
         //painting image
-        qDebug() << "x" << img_offset << img_offset%generateImgBuffor << img_offset/generateImgBuffor;
-        if((img_offset/generateImgBuffor) != img_move_offset)
+        if(img_offset%img_realWidth > generateImgBuffor*0.70 && img_offset%img_realWidth < generateImgBuffor*0.80)
         {
-            generate();
-            img_move_offset = (img_offset/generateImgBuffor);
+            qDebug() << "generacja do przodu";
+            generate(!img_nr,(img_offset/img_realWidth)+1);
         }
-        painter.drawImage(frameWidth-(img_offset%generateImgBuffor),this->height()-AX_X_DESC_SPACE-frameWidth-img->height(),*img);
+        if(img_offset%img_realWidth > generateImgBuffor*0.20 && img_offset%img_realWidth < generateImgBuffor*0.30)
+        {
+            qDebug() << "generacja wsteczna";
+            generate(!img_nr,(img_offset/img_realWidth)-1);
+        }
+        if((img_offset/img_realWidth)%2 ==0 )
+        {
+            img_nr = 0;
+        }
+        else
+            img_nr = 1;
 
+//        QImage * image = 0;
+//        QImage * image1 = 0;
+//        if (!img_nr)
+//        {
+//            image = img0;
+//            image1 = img1;
+//        }
+//        else
+//            image = img1;
+//            image1 = img0;
+//        if(image)
+//            painter.drawImage(frameWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*image);
+//        if(image1)
+        //            painter.drawImage(frameWidth+img_realWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*image1);
+        if (!img_nr)
+        {
+            painter.drawImage(frameWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img0);
+            if(img1)
+            painter.drawImage(frameWidth+img_realWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img1);
+        }
+        else
+        {
+            painter.drawImage(frameWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img1);
+            painter.drawImage(frameWidth+img_realWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img0);
+        }
+        qDebug() << "painted:" << img_nr << img_offset << img_offset%img_realWidth << (generateImgBuffor*0.75);
         //axis background
         painter.drawRect(this->width()-AX_Y_DESC_SPACE,0,AX_Y_DESC_SPACE,this->height()); // background for axis Y
         painter.drawRect(0,this->height()-AX_X_DESC_SPACE,this->width(),AX_X_DESC_SPACE); // background for axis
@@ -146,7 +180,7 @@ void Plot::paintEvent(QPaintEvent *)
         offset = this->height()-AX_X_DESC_SPACE-1;
         int frequencyGrindOffset; // frequensy per grind line
         if (file != 0)
-                frequencyGrindOffset = grindHorizontalSpace*file->frequency()/img->height();
+                frequencyGrindOffset = grindHorizontalSpace*file->frequency()/img0->height();
             else
                 frequencyGrindOffset = 0 ;
         for (int i=0;i<grindHorizontalCount;i++)
@@ -164,25 +198,27 @@ void Plot::paintEvent(QPaintEvent *)
 void Plot::resizeEvent(QResizeEvent *)
 {    
     repaintScene();
+    img_realWidth = (int)((this->width()-AX_Y_DESC_SPACE-frameWidth+generateImgBuffor)*imgZoom);
     generate();
 }
 
 inline void Plot::repaintScene() // eliminate "blinking" if is not called to offen
 {
     //remaking scene
-    delete img_scene; img_scene = 0;
-    img_scene = new QImage(this->width(),this->height(),QImage::Format_ARGB32);
+//    delete img_scene; img_scene = 0;
+//    img_scene = new QImage(this->width(),this->height(),QImage::Format_ARGB32);
 }
 
-inline void Plot::generate()
+inline void Plot::generate(bool nr, int offset)
 {
     if (generator)
     {
-        int start_from = (img_offset/generateImgBuffor)*generateImgBuffor;
-        qDebug() << "generated in:" << start_from << "<>" <<  (this->width()-AX_Y_DESC_SPACE+start_from+2*generateImgBuffor)/generator->zoomFactor();
-        //if(start_from<maxFFToffset) // correction of crash at max start_from  //TO CORRECT
-            img = generator->plotImage(start_from,(this->width()-AX_Y_DESC_SPACE+start_from+2*generateImgBuffor)/generator->zoomFactor());
-    }    
+        qDebug() << "generated: " << nr << "in" << offset << img_offset;
+        if(!nr)
+            img0 = generator->plotImage(offset*img_realWidth,(offset+1)*img_realWidth);
+        else
+            img1 = generator->plotImage(offset*img_realWidth,(offset+1)*img_realWidth);
+    }
 }
 
 void Plot::mousePressEvent(QMouseEvent *e)
