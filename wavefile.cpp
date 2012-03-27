@@ -245,7 +245,7 @@ void WaveFile::detectBeeps(int channelId)
         qWarning("detectBeeps() : seek() failed");
         return;
     }
-    const quint16 bufferSize = 2048;
+    const quint16 bufferSize = 512;
     double buffer[bufferSize];
     quint32 buffersCount = samples() / bufferSize + 1;
     qint64 readedData;
@@ -265,13 +265,13 @@ void WaveFile::detectBeeps(int channelId)
         }
         avgAmplitude /= bufferSize;
         avgAmplitude = sqrt(avgAmplitude);
-        if (avgAmplitude > 0.2 && !beepTakes) {
-            beepTakes = true;
-            qDebug() << "Beep starts on" << (double) i * bufferSize / file.header.wave.sampleRate << "seconds";
-        }
-        else if (beepTakes) {
+        if (beepTakes && avgAmplitude < 0.2) {
             beepTakes = false;
             qDebug() << "Beep stops on" << (double) i * bufferSize / file.header.wave.sampleRate << "seconds";
+        }
+        else if (!beepTakes && avgAmplitude > 0.2) {
+            beepTakes = true;
+            qDebug() << "Beep starts on" << (double) i * bufferSize / file.header.wave.sampleRate << "seconds";
         }
     }
 }
