@@ -21,6 +21,7 @@ public:
 
 private slots:
     void on_actionImageGenerator_triggered();
+    void setScrollBarMaximumValue(int);
 
 private:
     Ui::MainWindow *ui;

@@ -32,19 +32,18 @@ public:
     bool splitFile(QString filePath);
 
 signals:
+    void MaximumOffset(int); // emit max width of plot
+    void ImgOffset(int); // emit curent position
 
 private slots:
-    void imageGenerated();
+    void setImgOffset(int); // connected to horizontal scroll bar for setting imr_offset
+    void imageGenerated(); // finished generation of new img
 
 private:
-    // returning file offset counted form X posision on plot
-    int xAxToFileOffset(int xAxis);
-    // returning X pix on plot counded from wave file offSet
-    int fileOffsetToXAX(int fileOffset);
+    //FFTFile
+    int maxFFToffset;
 
     //Painting
-    inline void repaintScene();
-    inline void generateNewImg(QSize size);
     virtual void paintEvent(QPaintEvent *);
     virtual void resizeEvent(QResizeEvent *);
     QImage *img0;
@@ -61,8 +60,8 @@ private:
     static const int frameWidth = 2;
     static const int grindVerticalSpace = 40;
     static const int grindHorizontalSpace = 20;
-    static const int generateImgBuffor = 100;
-    static const float imgZoom = 1.33;
+    static const int generateImgBuffor = 1000;
+    static const float imgZoom = 9.33;
 
     //moving
     int img_offset; // the same as FFT_offset
@@ -71,6 +70,7 @@ private:
     virtual void mouseReleaseEvent(QMouseEvent *);
     virtual void mouseMoveEvent(QMouseEvent *);
     int oldMousePos; //used only in mose move event
+    enum slidingWay{ left = 0, right =1}slidingWay;
 
 public:
     //File data objects
@@ -78,8 +78,6 @@ public:
     QVector<Markers> markerList; // markers list object
     QTemporaryFile tempFile; // plot data temporary file
     Settings *settings; // plot settings object
-    int maxFFToffset;
-
 };
 
 #endif // PLOT_H

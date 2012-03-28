@@ -9,6 +9,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->horizontalScrollBar->setMaximum(0);
+    connect(ui->horizontalScrollBar,SIGNAL(valueChanged(int)),ui->plot,SLOT(setImgOffset(int)));
+    connect(ui->plot,SIGNAL(ImgOffset(int)),ui->horizontalScrollBar,SLOT(setValue(int)));
+    connect(ui->plot,SIGNAL(MaximumOffset(int)),this,SLOT(setScrollBarMaximumValue(int)));
 }
 
 MainWindow::~MainWindow()
@@ -20,5 +24,9 @@ void MainWindow::on_actionImageGenerator_triggered()
 {
     QString filePath = QFileDialog::getOpenFileName(this, tr("Open File"),QDir::homePath(),tr("WAV files")+" (*.wav)");
     ui->plot->openFile(filePath);
-    // ImageGenerator test
+}
+
+void MainWindow::setScrollBarMaximumValue(int value)
+{
+    ui->horizontalScrollBar->setMaximum(value);
 }
