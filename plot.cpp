@@ -81,7 +81,8 @@ bool Plot::openFile(QString filePath)
     connect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
 
     img_nr = 0;
-    emit MaximumOffset(maxFFToffset*imgZoom-this->width()+AX_Y_DESC_SPACE+frameWidth);
+    max_img_offset = maxFFToffset*imgZoom-this->width()+AX_Y_DESC_SPACE+frameWidth;
+    emit MaximumOffset(max_img_offset);
     generate(img_nr,0);
     return true;
 }
@@ -168,7 +169,8 @@ void Plot::resizeEvent(QResizeEvent *)
     img_nr = 0;
     img_offset = 0;
     generate(img_nr,0);
-    emit MaximumOffset(maxFFToffset*imgZoom-this->width()+AX_Y_DESC_SPACE+frameWidth);
+    max_img_offset = maxFFToffset*imgZoom-this->width()+AX_Y_DESC_SPACE+frameWidth;
+    emit MaximumOffset(max_img_offset);
 }
 
 inline void Plot::generate(bool nr, int offset)
@@ -213,6 +215,8 @@ void Plot::mouseMoveEvent(QMouseEvent *e)
         img_offset -= e->pos().x()-oldMousePos; // set new mouse position to img_offset
         if (img_offset <0) // protect for less then 0
             img_offset = 0;
+        else if (img_offset > max_img_offset) // end of file protection
+            img_offset = max_img_offset;
 
         // changing curentyly painting
         if((img_offset/img_realWidth)%2 == 0  && img_offset > 0)

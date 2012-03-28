@@ -65,6 +65,7 @@ private:
 
     //moving
     int img_offset; // the same as FFT_offset
+    int max_img_offset;
     bool draggingEnabled;
     virtual void mousePressEvent(QMouseEvent *);
     virtual void mouseReleaseEvent(QMouseEvent *);
