@@ -61,7 +61,7 @@ private:
     static const int grindVerticalSpace = 40;
     static const int grindHorizontalSpace = 20;
     static const int generateImgBuffor = 1000;
-    static const float imgZoom = 9.33;
+    static const float imgZoom = 1.2;
 
     //moving
     int img_offset; // the same as FFT_offset

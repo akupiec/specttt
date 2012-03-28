@@ -81,7 +81,7 @@ bool Plot::openFile(QString filePath)
     connect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
 
     img_nr = 0;
-    emit MaximumOffset(maxFFToffset*imgZoom);
+    emit MaximumOffset(maxFFToffset*imgZoom-this->width()+AX_Y_DESC_SPACE+frameWidth);
     generate(img_nr,0);
     return true;
 }
@@ -168,7 +168,7 @@ void Plot::resizeEvent(QResizeEvent *)
     img_nr = 0;
     img_offset = 0;
     generate(img_nr,0);
-    emit MaximumOffset(maxFFToffset*imgZoom);
+    emit MaximumOffset(maxFFToffset*imgZoom-this->width()+AX_Y_DESC_SPACE+frameWidth);
 }
 
 inline void Plot::generate(bool nr, int offset)

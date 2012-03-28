@@ -9,6 +9,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->horizontalScrollBar->setMinimum(0);
     ui->horizontalScrollBar->setMaximum(0);
     connect(ui->horizontalScrollBar,SIGNAL(valueChanged(int)),ui->plot,SLOT(setImgOffset(int)));
     connect(ui->plot,SIGNAL(ImgOffset(int)),ui->horizontalScrollBar,SLOT(setValue(int)));
@@ -28,5 +29,8 @@ void MainWindow::on_actionImageGenerator_triggered()
 
 void MainWindow::setScrollBarMaximumValue(int value)
 {
+//    qDebug() << value;
+    ui->horizontalScrollBar->setMinimum(0);
     ui->horizontalScrollBar->setMaximum(value);
+//    qDebug() << "scrollbar:" << ui->horizontalScrollBar->minimum() << ui->horizontalScrollBar->maximum() << ui->horizontalScrollBar->singleStep() << ui->horizontalScrollBar->pageStep();
 }
