@@ -33,8 +33,6 @@ FORMS    += mainwindow.ui
 OTHER_FILES += \
     TODO
 
-PRECOMPILED_HEADER += fft.h \
-    cyclicqueue.h
 
 
 

@@ -96,93 +96,102 @@ void Plot::paintEvent(QPaintEvent *)
 {
     QPainter painter;
     painter.begin(this);
-    if (img0)
-    {
-        //background
-        painter.setBrush(Qt::black);
-        painter.drawRect(0,0,this->width(),this->height());
 
-        //painting image
+    //background
+    painter.setBrush(Qt::black);
+    painter.drawRect(0,0,this->width(),this->height());
+
+    //painting image
+    if(generator && generator->isFinished()) // prevents casual crashes but will not print anything while thread is working
+    {
         if (!img_nr)
         {
-            painter.drawImage(frameWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img0);
-            if(img1)
-               painter.drawImage(frameWidth+img0->width()+2-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img1->height(),*img1);
+            if (img0)
+            {
+                painter.drawImage(frameWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img0);
+                if(img1)
+                    painter.drawImage(frameWidth+img0->width()-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img1->height(),*img1);
+            }
         }
         else
         {
             if(img1)
             {
                 painter.drawImage(frameWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img1->height(),*img1);
-                painter.drawImage(frameWidth+img1->width()+2-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img0);
+                if(img0)
+                    painter.drawImage(frameWidth+img1->width()-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img0);
             }
         }
-        //axis background
-        painter.drawRect(this->width()-AX_Y_DESC_SPACE,0,AX_Y_DESC_SPACE,this->height()); // background for axis Y
-        painter.drawRect(0,this->height()-AX_X_DESC_SPACE,this->width(),AX_X_DESC_SPACE); // background for axis
-
-        //frame
-        painter.setPen(QPen(QBrush(Qt::darkGreen),frameWidth));
-        painter.setBrush(Qt::NoBrush);
-        painter.drawRect(frameWidth/2,frameWidth/2,this->width()-AX_Y_DESC_SPACE,this->height()-AX_X_DESC_SPACE);
-
-        //grind & values
-        //Veritical
-        painter.setPen(QPen(QBrush(Qt::white),1,Qt::DotLine));
-        QString value;
-        int grindVerticalCount = ((this->width()-AX_Y_DESC_SPACE-frameWidth)/grindVerticalSpace)+1; //amout of grind lines
-        int offset; // painting grind offset
-        for (int i=0;i<grindVerticalCount;i++)  // painting grind loop
-        {
-            offset = (i*grindVerticalSpace)+frameWidth;
-            painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
-            if (file != 0)
-                value.setNum((((offset-frameWidth+img_offset)*file->time()/maxFFToffset)/generator->zoomFactor()),'f',3);
-            else
-                value = "0.0";
-            painter.drawText(offset,this->height()-AX_X_DESC_SPACE+frameWidth+15,value);
-        }
-        //Horizontal
-        int grindHorizontalCount = ((this->height()-AX_X_DESC_SPACE-frameWidth)/grindHorizontalSpace)+1;
-        offset = this->height()-AX_X_DESC_SPACE-1;
-        int frequencyGrindOffset; // frequensy per grind line
-        if (file != 0)
-                frequencyGrindOffset = grindHorizontalSpace*file->frequency()/img0->height();
-            else
-                frequencyGrindOffset = 0 ;
-        for (int i=0;i<grindHorizontalCount;i++)
-        {
-            painter.drawLine(frameWidth,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
-            value.setNum(i*frequencyGrindOffset);
-            painter.drawText(this->width()-AX_Y_DESC_SPACE+15,offset,value);
-            offset -= grindHorizontalSpace;
-        }
-
     }
-    painter.end();
+    //axis background
+    painter.drawRect(this->width()-AX_Y_DESC_SPACE,0,AX_Y_DESC_SPACE,this->height()); // background for axis Y
+    painter.drawRect(0,this->height()-AX_X_DESC_SPACE,this->width(),AX_X_DESC_SPACE); // background for axis
 
+    //frame
+    painter.setPen(QPen(QBrush(Qt::darkGreen),frameWidth));
+    painter.setBrush(Qt::NoBrush);
+    painter.drawRect(frameWidth/2,frameWidth/2,this->width()-AX_Y_DESC_SPACE,this->height()-AX_X_DESC_SPACE);
+
+    //grind & values
+    //Veritical
+    painter.setPen(QPen(QBrush(Qt::white),1,Qt::DotLine));
+    QString value;
+    int grindVerticalCount = ((this->width()-AX_Y_DESC_SPACE-frameWidth)/grindVerticalSpace)+1; //amout of grind lines
+    int offset; // painting grind offset
+    for (int i=0;i<grindVerticalCount;i++)  // painting grind loop
+    {
+        offset = (i*grindVerticalSpace)+frameWidth;
+        painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
+        if (file != 0)
+            value.setNum((((offset-frameWidth+img_offset)*file->time()/maxFFToffset)/generator->zoomFactor()),'f',3);
+        else
+            value = "0.0";
+        painter.drawText(offset,this->height()-AX_X_DESC_SPACE+frameWidth+15,value);
+    }
+    //Horizontal
+    int grindHorizontalCount = ((this->height()-AX_X_DESC_SPACE-frameWidth)/grindHorizontalSpace)+1;
+    offset = this->height()-AX_X_DESC_SPACE-1;
+    int frequencyGrindOffset =0; // frequensy per grind line
+    // depends on img height so it have to check both img0 and img1 to protect dividing by 0
+    if (file != 0 && img0 && !img0->isNull())
+        frequencyGrindOffset = grindHorizontalSpace*file->frequency()/img0->height();
+    if (file != 0 && img1 && !img1->isNull())
+        frequencyGrindOffset = grindHorizontalSpace*file->frequency()/img1->height();
+    for (int i=0;i<grindHorizontalCount;i++) // painting loop
+    {
+        painter.drawLine(frameWidth,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
+        value.setNum(i*frequencyGrindOffset);
+        painter.drawText(this->width()-AX_Y_DESC_SPACE+15,offset,value);
+        offset -= grindHorizontalSpace;
+    }
+
+    painter.end();
 }
+
 void Plot::resizeEvent(QResizeEvent *)
 {
     img_realWidth = this->width()-AX_Y_DESC_SPACE-frameWidth+generateImgBuffor;
-
+    //after resize set evrithing to 0
     img_nr = 0;
     img_offset = 0;
     generate(img_nr,0);
+    //emitning new parametrs
     max_img_offset = maxFFToffset*imgZoom-this->width()+AX_Y_DESC_SPACE+frameWidth;
     emit MaximumOffset(max_img_offset);
+    emit ImgOffset(img_offset);
 }
 
 inline void Plot::generate(bool nr, int offset)
 {
+    //work only when generator exist (file reader) and is not busy
     if (generator)
     {
         if (!generator->isRunning())
         {
             if(!nr)
             {
-                delete img0;
-                img0 = generator->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom);
+                delete img0; //deleting old img
+                img0 = generator->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom); // generating new one
                 last_generated_offset = offset;
             }
             else
@@ -217,47 +226,8 @@ void Plot::mouseMoveEvent(QMouseEvent *e)
             img_offset = 0;
         else if (img_offset > max_img_offset) // end of file protection
             img_offset = max_img_offset;
-
-        // changing curentyly painting
-        if((img_offset/img_realWidth)%2 == 0  && img_offset > 0)
-            img_nr = 0;
-        else
-            img_nr = 1;
-
-        if(img_offset == 0) img_nr = 0;
-
-        int offset;
-
-        if(e->pos().x() < oldMousePos)
-        {
-            // genereting NEXT img to img0 or img1 depends on curently painted
-            if(img_offset % img_realWidth > generateImgBuffor/2)
-            {
-                offset = (img_offset/img_realWidth)+1;
-                if(offset != last_generated_offset)
-                {
-                    qDebug() << "generacja do przodu: " << offset <<", w:"<< !img_nr << "gdzie jest:" << offset-1 << img_nr;
-                    generate(!img_nr,offset);
-                }
-            }
-        }
-        else
-        {
-            // generating PREVIOUS img
-            if(img_offset%img_realWidth < generateImgBuffor/2)
-            {
-                int offset = (img_offset/img_realWidth)-1;
-                if(offset < 0) offset =0;
-                if(offset != last_generated_offset)
-                {
-                    qDebug() << "generacja wsteczna: " << offset <<", w:"<< !img_nr << "gdzie jest:" << offset+1 << img_nr;
-                    generate(!img_nr,offset);
-                }
-
-            }
-        }
+        moveGenerate(); //generate new images
         oldMousePos = e->pos().x(); //temp mouse position used in next step
-        this->update(); // upade plot
         emit ImgOffset(img_offset); // emiting img_offset to scrollbar
     }
 }
@@ -265,37 +235,48 @@ void Plot::mouseMoveEvent(QMouseEvent *e)
 void Plot::setImgOffset(int offset)
 {
     img_offset=offset;
+    moveGenerate(); //generate new images
+}
 
+inline void Plot::moveGenerate()
+{
     // changing curentyly painting
     if((img_offset/img_realWidth)%2 == 0  && img_offset > 0)
         img_nr = 0;
     else
         img_nr = 1;
-
     if(img_offset == 0) img_nr = 0;
 
-    int offset_;
-    // genereting NEXT img to img0 or img1 depends on curently painted
-    if(img_offset % img_realWidth > generateImgBuffor/2)
+    int offset;
+    if(img_offset > img_offset_old) // if plot moved to left
     {
-        offset_ = (img_offset/img_realWidth)+1;
-        if(offset_ != last_generated_offset)
+        // genereting NEXT img to img0 or img1 depends on curently painted
+        if(img_offset % img_realWidth > generateImgBuffor/2)
         {
-            qDebug() << "generacja do przodu: " << offset_ <<", w:"<< !img_nr << "gdzie jest:" << offset_-1 << img_nr;
-            generate(!img_nr,offset_);
+            offset = (img_offset/img_realWidth)+1;
+            if(offset != last_generated_offset)
+            {
+                //qDebug() << "generacja do przodu: " << offset <<", w:"<< !img_nr << "gdzie jest:" << offset-1 << img_nr;
+                generate(!img_nr,offset);
+            }
         }
     }
-    // generating PREVIOUS img
-    if(img_offset%img_realWidth < generateImgBuffor/2)
+    else
     {
-        offset_ = (img_offset/img_realWidth)-1;
-        if(offset_ < 0) offset_ =0;
-        if(offset_ != last_generated_offset)
+        // generating PREVIOUS img
+        if(img_offset%img_realWidth < generateImgBuffor/2)
         {
-            qDebug() << "generacja wsteczna: " << offset_ <<", w:"<< !img_nr << "gdzie jest:" << offset_+1 << img_nr;
-            generate(!img_nr,offset_);
-        }
+            int offset = (img_offset/img_realWidth)-1;
+            if(offset < 0) offset =0;
+            if(offset != last_generated_offset)
+            {
+               // qDebug() << "generacja wsteczna: " << offset <<", w:"<< !img_nr << "gdzie jest:" << offset+1 << img_nr;
+                generate(!img_nr,offset);
+            }
 
+        }
     }
+
+    img_offset_old = img_offset; //setting curent offset to old one
     this->update();
 }
