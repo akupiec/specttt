@@ -102,14 +102,15 @@ void Plot::paintEvent(QPaintEvent *)
     painter.drawRect(0,0,this->width(),this->height());
 
     //painting image
-    if(generator && generator->isFinished()) // prevents casual crashes but will not print anything while thread is working
+    if(generator )
     {
         if (!img_nr)
         {
             if (img0)
             {
+                // if generator is working here will couse carash
                 painter.drawImage(frameWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img0);
-                if(img1)
+                if(img1 && generator->isFinished())
                     painter.drawImage(frameWidth+img0->width()-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img1->height(),*img1);
             }
         }
@@ -118,7 +119,7 @@ void Plot::paintEvent(QPaintEvent *)
             if(img1)
             {
                 painter.drawImage(frameWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img1->height(),*img1);
-                if(img0)
+                if(img0 && generator->isFinished())
                     painter.drawImage(frameWidth+img1->width()-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img0);
             }
         }
