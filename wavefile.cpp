@@ -219,7 +219,7 @@ qint64 WaveFile::readMarkers(QVector<Markers> *marker)
         }
         // setting parameters to Markers QVector
         marker->clear();
-        for(int i=0; i<file.cue.numCuePoints;i++)
+        for(quint16 i=0; i<file.cue.numCuePoints;i++)
         {
             //setting text
             QString temp = "";
