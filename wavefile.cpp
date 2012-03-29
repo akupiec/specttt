@@ -1,5 +1,6 @@
-#include "wavefile.h"
 #include <QDebug>
+#include <cmath>
+#include "wavefile.h"
 
 WaveFile::WaveFile(const QString &name) : QFile(name)
 {
@@ -235,4 +236,48 @@ qint64 WaveFile::readMarkers(QVector<Markers> *marker)
     else //at EOF
         return -2;
     return result;
+}
+
+void WaveFile::detectBeeps(int channelId)
+{
+    if (!seek(posDataBeg()))
+    {
+        qWarning("detectBeeps() : seek() failed");
+        return;
+    }
+    const quint16 bufferSize = file.header.wave.sampleRate / 10;
+    const qreal beepThreshold = 0.04;
+    double buffer[bufferSize];
+    quint32 buffersCount = samples() / bufferSize + 1;
+    qint64 readedData;
+    bool beepTakes = false;
+    double avgAmplitude;
+    double seconds;
+    // buffers counting loop
+    for (quint32 i=0; i<buffersCount; i++)
+    {
+        avgAmplitude = 0.0;
+        readedData = readData(buffer, bufferSize, channelId);
+        if (readedData < 0)
+        {
+            qWarning("detectBeeps() : readData() error met");
+            return;
+        }
+        for (quint32 j=0; j<bufferSize; j++)
+        {
+            avgAmplitude += buffer[j] * buffer[j];
+        }
+        avgAmplitude /= bufferSize;
+        avgAmplitude = sqrt(avgAmplitude);
+        if (beepTakes && avgAmplitude < beepThreshold) {
+            beepTakes = false;
+            qDebug() << "Beep starts on" << seconds << "seconds, stops on" << (double) i * bufferSize / file.header.wave.sampleRate << "seconds";
+        }
+        else if (!beepTakes && avgAmplitude > beepThreshold) {
+            beepTakes = true;
+            seconds = (double) i * bufferSize / file.header.wave.sampleRate;
+        }
+    }
+    if (beepTakes)
+        qDebug() << "Beep starts on" << seconds << "seconds, stops on" << (double) buffersCount * bufferSize / file.header.wave.sampleRate << "seconds";
 }

@@ -162,7 +162,7 @@ void Plot::paintEvent(QPaintEvent *)
 
 }
 void Plot::resizeEvent(QResizeEvent *)
-{    
+{
     repaintScene();
     generate();
 }

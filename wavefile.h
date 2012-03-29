@@ -33,6 +33,9 @@ public:
     //Return the BEGINING of data chunk position in the file
     qint64 posDataBeg() const {return dataOffset;}
 
+public slots:
+    void detectBeeps(int channelId = 0);
+
 //    // virtual methods interided from QFile
 //    virtual bool atEnd() const { return QFile::atEnd(); }
 //    virtual void close() { QFile::close(); }
