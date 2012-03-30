@@ -14,8 +14,8 @@
 
 class Settings;
 
-//klasa jest odpowiedzialna za koordynacje danych miêdzy wavefile a fft
-//jest to klasa odpowiedzialna za rysowanie wykresu*   ///// ja by to i tak wywali³ o osobnej ³atwiej bêdzie nawigowaæ danymi nie pogubimy sie co dlaczego i gdzie
+//klasa jest odpowiedzialna za koordynacje danych miÄ™dzy wavefile a fft
+//jest to klasa odpowiedzialna za rysowanie wykresu*   ///// ja by to i tak wywaliÅ‚ o osobnej Å‚atwiej bÄ™dzie nawigowaÄ‡ danymi nie pogubimy sie co dlaczego i gdzie
 class Plot : public QWidget
 {
     Q_OBJECT
@@ -30,6 +30,9 @@ public:
     bool saveFile(QString filePath);
     // ...........
     bool splitFile(QString filePath);
+
+public slots:
+    void detectBeeps(int channelId = 0);
 
 signals:
     void MaximumOffset(int); // emit max width of plot

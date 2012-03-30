@@ -1,6 +1,12 @@
 #include <QDebug>
 #include <QDataStream>
 #include <QDir>
+#include <QtXml/QDomDocument>
+#include <QtXml/QDomElement>
+#include <QFile>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <cmath>
 #include "plot.h"
 #include "settings.h"
 
@@ -279,4 +285,77 @@ inline void Plot::moveGenerate()
 
     img_offset_old = img_offset; //setting curent offset to old one
     this->update();
+}
+
+void Plot::detectBeeps(int channelId)
+{
+    if (!file->seek(file->posDataBeg()))
+    {
+        qWarning("detectBeeps() : seek() failed");
+        return;
+    }
+    // xml document
+    QDomDocument xml ("xml");
+    xml.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\"");
+    QDomElement xmlRoot = xml.createElement("detected");
+    xml.appendChild(xmlRoot);
+    QDomElement xmlSignal; // if it's necessary you can add text node
+    // detection variables
+    const quint16 bufferSize = file->fileStruct().header.wave.sampleRate / 10;
+    const qreal beepThreshold = 0.04;
+    double buffer[bufferSize];
+    quint32 buffersCount = file->samples() / bufferSize + 1;
+    qint64 readedData;
+    bool beepTakes = false;
+    double avgAmplitude;
+    double seconds;
+    // buffers counting loop
+    for (quint32 i=0; i<buffersCount; i++)
+    {
+        avgAmplitude = 0.0;
+        readedData = file->readData(buffer, bufferSize, channelId);
+        if (readedData < 0)
+        {
+            qWarning("detectBeeps() : readData() error met");
+            return;
+        }
+        for (quint32 j=0; j<bufferSize; j++)
+        {
+            avgAmplitude += buffer[j] * buffer[j];
+        }
+        avgAmplitude /= bufferSize;
+        avgAmplitude = sqrt(avgAmplitude);
+        if (beepTakes && avgAmplitude < beepThreshold) { // end of signal
+            beepTakes = false;
+            qDebug() << "Beep starts on" << seconds << "seconds, stops on" << (double) i * bufferSize / file->fileStruct().header.wave.sampleRate << "seconds";
+            xmlSignal.setAttribute("endTime",QString::number((double) i * bufferSize / file->fileStruct().header.wave.sampleRate,'f',1));
+            xmlRoot.appendChild(xmlSignal);
+        }
+        else if (!beepTakes && avgAmplitude > beepThreshold) { // origin of signal
+            beepTakes = true;
+            seconds = (double) i * bufferSize / file->fileStruct().header.wave.sampleRate;
+            xmlSignal = xml.createElement("signal");
+            xmlSignal.setAttribute("originTime",QString::number(seconds,'f',1));
+        }
+    }
+    if (beepTakes)
+    {
+        qDebug() << "Beep starts on" << seconds << "seconds, stops on" << (double) buffersCount * bufferSize / file->fileStruct().header.wave.sampleRate << "seconds";
+        xmlSignal.setAttribute("endTime",QString::number((double) buffersCount * bufferSize / file->fileStruct().header.wave.sampleRate,'f',1));
+        xmlRoot.appendChild(xmlSignal);
+    }
+    qDebug() << xml.toString(4);
+    // saving xml file
+    QString fileName = file->fileName();
+    QFile xmlFile(fileName.left(fileName.lastIndexOf('.')+1).append("xml"));
+    while (!xmlFile.open(QIODevice::WriteOnly))
+    {
+        QMessageBox::warning(this,tr("Permission needed"),tr("Choose path where you can write."),QMessageBox::Ok);
+        QString path = QFileDialog::getExistingDirectory(this, tr("Choose directory"),QDir::homePath());
+        if (path.isEmpty()) // when file dialog was canceled
+            return;
+        xmlFile.setFileName(path);
+    }
+    QTextStream stream (&xmlFile);
+    xml.save(stream,4,QDomNode::EncodingFromDocument);
 }
