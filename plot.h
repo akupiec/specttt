@@ -44,7 +44,8 @@ private slots:
 private:
     //FFTFile
     int maxFFToffset;
-    int offsetFileToOffsetFFT(quint32 offset) {return (offset*maxFFToffset/file->maxOffset())*imgZoom;}
+    int offsetFileToOffsetFFT(quint32 offset) {return (offset*maxFFToffset/(double)file->maxOffset())*imgZoom;}
+    quint32 offsetFFTToOffsetFile(int offset) {return (offset/imgZoom)*file->maxOffset()/maxFFToffset;}
 
     //Painting
     virtual void paintEvent(QPaintEvent *);
@@ -73,6 +74,8 @@ private:
     int img_offset_old; // previous img_offset
     int max_img_offset; // and of imgae in pixels
     bool draggingEnabled; // true when mose left button is pressed
+    int markerIndexdragging; // id curently dragging marker, -1 when dragging is disable
+    int markerEdgedragging; //-1 when dragging whole marker, 0 when dragging left edge, 1 for right edge
     virtual void mousePressEvent(QMouseEvent *);
     virtual void mouseReleaseEvent(QMouseEvent *);
     virtual void mouseMoveEvent(QMouseEvent *);

@@ -13,7 +13,8 @@ Plot::Plot(QWidget *parent) :
 {
     file = 0;
     img_offset = 0;
-    draggingEnabled =0;
+    draggingEnabled =0; // disable moving plot
+    markerIndexdragging = -1; //disable dragging markers
     img0 = 0;
     img1 = 0;
     img_nr = 0;
@@ -127,7 +128,7 @@ void Plot::paintEvent(QPaintEvent *)
     painter.setPen(QPen(QBrush(Qt::NoBrush),0));
     painter.setBrush(QColor(0,0,255,100));
     for(int i=0; i<markerList.count();i++)
-        painter.drawRect(frameWidth+offsetFileToOffsetFFT(markerList[i].beginOffset())-img_offset,0,100,this->height()-AX_X_DESC_SPACE);
+        painter.drawRect(frameWidth+offsetFileToOffsetFFT(markerList[i].beginOffset())-img_offset,0,offsetFileToOffsetFFT(markerList[i].endOffset()-markerList[i].beginOffset()),this->height()-AX_X_DESC_SPACE);
 
     //axis background
     painter.setBrush(Qt::black);
@@ -216,12 +217,41 @@ void Plot::mousePressEvent(QMouseEvent *e)
     oldMousePos = e->pos().x();
     if (e->button() == Qt::LeftButton && !draggingEnabled) // enable moving plot by dragging
         draggingEnabled = true;
+    if (e->button() == Qt::RightButton) // editing markers
+    {
+        for(int i=0; i<markerList.count(); i++)
+        {
+            int begin = offsetFileToOffsetFFT(markerList[i].beginOffset())-img_offset;
+            int end = offsetFileToOffsetFFT(markerList[i].endOffset())-img_offset;
+
+            if(e->pos().x() > begin+5 && e->pos().x() < end - 5) // moving whole marker
+            {
+                this->setCursor(Qt::SizeAllCursor);
+                markerIndexdragging = i;
+                markerEdgedragging = -1;
+            }
+            else if (e->pos().x() > begin - 5 && e->pos().x() < begin +5) // moving left edge of marker
+            {
+                this->setCursor(Qt::SizeHorCursor);
+                markerIndexdragging = i;
+                markerEdgedragging = 0;
+            }
+            else if (e->pos().x() > end - 5 && e->pos().x() < end +5) // moving right edge of marker
+            {
+                this->setCursor(Qt::SizeHorCursor);
+                markerIndexdragging = i;
+                markerEdgedragging = 1;
+            }
+        }
+    }
 }
 
 void Plot::mouseReleaseEvent(QMouseEvent *)
 {
     if(draggingEnabled) //disable moving plot by dragging
         draggingEnabled = false;
+    markerIndexdragging = -1; //disable dragging markers
+    this->setCursor(Qt::ArrowCursor);
 }
 
 void Plot::mouseMoveEvent(QMouseEvent *e)
@@ -234,9 +264,37 @@ void Plot::mouseMoveEvent(QMouseEvent *e)
         else if (img_offset > max_img_offset) // end of file protection
             img_offset = max_img_offset;
         moveGenerate(); //generate new images
-        oldMousePos = e->pos().x(); //temp mouse position used in next step
         emit ImgOffset(img_offset); // emiting img_offset to scrollbar
     }
+    if(markerIndexdragging != -1)
+    {
+        if(markerEdgedragging == -1) //drag whole marker
+        {
+            int newBegin = markerList[markerIndexdragging].beginOffset() + offsetFFTToOffsetFile(e->pos().x()-oldMousePos);
+            int newEnd = markerList[markerIndexdragging].endOffset() + offsetFFTToOffsetFile(e->pos().x()-oldMousePos);
+            if (newBegin >=0 && newEnd <= file->maxOffset())
+            {
+                markerList[markerIndexdragging].setBeginOffset(newBegin);
+                markerList[markerIndexdragging].setEndOffset(newEnd);
+            }
+        }
+        else if(markerEdgedragging == 0)  //drag left edge of marker
+        {
+            int newBegin = markerList[markerIndexdragging].beginOffset() + offsetFFTToOffsetFile(e->pos().x()-oldMousePos);
+            int end = markerList[markerIndexdragging].endOffset();
+            if (newBegin >=0 && newBegin < end - offsetFFTToOffsetFile(20))
+                markerList[markerIndexdragging].setBeginOffset(newBegin);
+        }
+        else if(markerEdgedragging == 1)  //drag left edge of marker
+        {
+            int begin = markerList[markerIndexdragging].beginOffset();
+            int newEnd = markerList[markerIndexdragging].endOffset() + offsetFFTToOffsetFile(e->pos().x()-oldMousePos);
+            if (newEnd <= file->maxOffset() && begin < newEnd - offsetFFTToOffsetFile(20))
+                markerList[markerIndexdragging].setEndOffset(newEnd);
+        }
+        this->update(); //repaint plot
+    }
+    oldMousePos = e->pos().x(); //temp mouse position used in next step
 }
 
 void Plot::setImgOffset(int offset)
@@ -280,7 +338,6 @@ inline void Plot::moveGenerate()
                // qDebug() << "generacja wsteczna: " << offset <<", w:"<< !img_nr << "gdzie jest:" << offset+1 << img_nr;
                 generate(!img_nr,offset);
             }
-
         }
     }
 
