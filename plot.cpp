@@ -122,7 +122,15 @@ void Plot::paintEvent(QPaintEvent *)
             }
         }
     }
+
+    //markres
+    painter.setPen(QPen(QBrush(Qt::NoBrush),0));
+    painter.setBrush(QColor(0,0,255,100));
+    for(int i=0; i<markerList.count();i++)
+        painter.drawRect(frameWidth+offsetFileToOffsetFFT(markerList[i].beginOffset())-img_offset,0,100,this->height()-AX_X_DESC_SPACE);
+
     //axis background
+    painter.setBrush(Qt::black);
     painter.drawRect(this->width()-AX_Y_DESC_SPACE,0,AX_Y_DESC_SPACE,this->height()); // background for axis Y
     painter.drawRect(0,this->height()-AX_X_DESC_SPACE,this->width(),AX_X_DESC_SPACE); // background for axis
 
@@ -282,5 +290,7 @@ inline void Plot::moveGenerate()
 
 void Plot::detectBeeps(int channelId)
 {
-    file->detectBeeps(&markerList,channelId);
+    if(file)
+        file->detectBeeps(&markerList,channelId);
+    this->update();
 }

@@ -154,7 +154,7 @@ void WaveFile::detectBeeps(QVector<Markers> *markers, int channelId)
             qDebug() << "Beep starts on" << seconds << "seconds, stops on" << (double) i * bufferSize / file.header.wave.sampleRate << "seconds";
             xmlSignal.setAttribute("endTime",QString::number((double) i * bufferSize / file.header.wave.sampleRate,'f',1));
             xmlRoot.appendChild(xmlSignal);
-            markers->append(Markers(beginBuffer,i*bufferSize,"Detected"));
+            markers->append(Markers(beginBuffer*file.header.wave.blockAlign,i*bufferSize*file.header.wave.blockAlign,"Detected"));
         }
         else if (!beepTakes && avgAmplitude > beepThreshold) { // origin of signal
             beepTakes = true;
@@ -169,7 +169,7 @@ void WaveFile::detectBeeps(QVector<Markers> *markers, int channelId)
         qDebug() << "Beep starts on" << seconds << "seconds, stops on" << (double) buffersCount * bufferSize / file.header.wave.sampleRate << "seconds";
         xmlSignal.setAttribute("endTime",QString::number((double) buffersCount * bufferSize / file.header.wave.sampleRate,'f',1));
         xmlRoot.appendChild(xmlSignal);        
-        markers->append(Markers(beginBuffer,buffersCount*bufferSize,"Detected"));
+        markers->append(Markers(beginBuffer*file.header.wave.blockAlign,buffersCount*bufferSize*file.header.wave.blockAlign,"Detected"));
     }
     qDebug() << xml.toString(4);
     // saving xml file
