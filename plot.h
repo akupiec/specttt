@@ -38,6 +38,8 @@ signals:
 private slots:
     void setImgOffset(int); // connected to horizontal scroll bar for setting imr_offset
     void imageGenerated(); // finished generation of new img
+    //auto detect all beeps in wave file
+    void detectBeeps(int channelId = 0);
 
 private:
     //FFTFile

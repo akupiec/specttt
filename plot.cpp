@@ -75,7 +75,6 @@ bool Plot::openFile(QString filePath)
     }
     tempFile.close();
     qDebug() << tempFile.fileName();
-    file->readMarkers(&markerList);
     generator = new ImageGenerator(file, &tempFile, settings->colors(), this);
     generator->setZoomFactor(imgZoom);
     connect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
@@ -279,4 +278,9 @@ inline void Plot::moveGenerate()
 
     img_offset_old = img_offset; //setting curent offset to old one
     this->update();
+}
+
+void Plot::detectBeeps(int channelId)
+{
+    file->detectBeeps(&markerList,channelId);
 }

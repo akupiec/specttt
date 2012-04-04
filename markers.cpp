@@ -1,8 +1,8 @@
 #include "markers.h"
-Markers::Markers(){}
-Markers::Markers(quint32 fileOffset, QString label, QString note)
+Markers::Markers(quint32 beginOffset, quint32 endOffset, QString label, QString note)
 {
-    _fileOffset=fileOffset;
+    _fileBeginOffset=beginOffset;
+    _fileEndOffset = endOffset;
     _label = label;
     _note = note;
 }

@@ -110,141 +110,7 @@ qint64 WaveFile::readData(double *buffer, int bufferSize, qint64 offset, int cha
     return -1;
 }
 
-qint64 WaveFile::readMarkers(QVector<Markers> *marker)
-{
-    seek(posDataEnd());
-    file.cue.numCuePoints = 0;
-    file.cue.descriptor.size = 0;
-    if (atEnd())
-        return -1;
-    //reading main part of cue chunk
-    qint64 result = read(reinterpret_cast<char *>(&file.cue), file.chunkLength);
-    if ( result == file.chunkLength ) {
-        while (memcmp(file.cue.descriptor.id,"cue ",4) != 0) {
-            result += read(file.cue.descriptor.size).size();
-            result += read(reinterpret_cast<char *>(&file.cue), file.chunkLength);
-        }
-        result += read(reinterpret_cast<char *>(&file.cue.numCuePoints), sizeof(file.cue.numCuePoints));
-        file.cue.list.resize(file.cue.numCuePoints);
-        for (quint32 i=0; i<file.cue.numCuePoints; i++) {
-            result += read(reinterpret_cast<char *>(&file.cue.list[i]), file.cuePointLength);
-        }
-        qDebug() << "Cue Point count:" << file.cue.numCuePoints;
-        if (atEnd())
-            return result;
-
-        // reading list chunk and details
-        File::DataListChunk list;     //main LIST chunk
-        while (true)
-        {
-            result += read(reinterpret_cast<char *>(&list), file.chunkLength); // searching for "LIST" chunk
-            if (memcmp(list.descriptor.id,"LIST",4) == 0)
-            {
-                //LIST was found reading rest of it
-                result += read(reinterpret_cast<char *>(&list.typeID) ,4);
-                if (memcmp(list.typeID,"adtl",4) == 0)
-                    break;
-                else
-                    return result; // chunk List was found, but was containing incorrect data
-            }
-            else if(atEnd()) // chunk List not found, this mean it didn't found descryption of marks
-                return result;
-        }
-        //chunk List was readed wholly proper, looking for rest of cue chank's
-        File::Chunk temp; //temporary chunk
-
-        //mark's description lists
-        QVector<File::LabelChunk> listLabels_;
-        QVector<File::NoteChunk>  listNotes_;
-        QVector<File::LabeledTextChunk> listLtxt_;
-
-        listLabels_.clear();
-        listNotes_.clear();
-        listLtxt_.clear();
-        while(!atEnd())
-        {
-            //laooking for chunk begining
-            //reading 1 byte loop until first byte of id is not "/0"
-            do
-                result += read(reinterpret_cast<char *>(&temp),1);
-            while(temp.id[0] == 0 || temp.id[0] == 20);
-            // reading rest of chunk
-            seek(pos()-1); // withdrawing read positnion by 1 byte
-            result += read(reinterpret_cast<char *>(&temp),sizeof(temp));
-            if (memcmp(temp.id,"ltxt",4) == 0)
-            {
-                File::LabeledTextChunk ltxt;
-                result += read(reinterpret_cast<char *>(&ltxt),20);
-                ltxt.text.clear();
-                int sizeOfText = temp.size-28; // size of text stored in chunk
-                if (sizeOfText > 0)
-                {
-                    ltxt.text.reserve(sizeOfText); // reserving nessesery size for text
-                    char *tempChar = new char[sizeOfText]; //templorary char table for text
-                    result += read(tempChar,sizeOfText); // reading text
-                    ltxt.text = tempChar;
-                    delete tempChar;
-                    //qDebug() << "ltxt text: " << ltxt.text;
-                }
-                listLtxt_.append(ltxt); // adding readed chunk to list
-            }
-            else if (memcmp(temp.id,"labl",4) == 0)
-            {
-                File::LabelChunk label;
-                result += read(reinterpret_cast<char *>(&label.cuePointID),4);
-                label.text.clear();
-                int sizeOfText = temp.size - 4; // size of text stored in chunk
-                if (sizeOfText > 0)
-                {
-                    label.text.reserve(sizeOfText);
-                    char *tempChar = new char[sizeOfText];
-                    result += read(tempChar,sizeOfText);
-                    label.text = tempChar;
-                    delete tempChar;
-                    //qDebug() << "label text: " << label.text;
-                }
-                listLabels_.append(label);
-            }
-            else if (memcmp(temp.id,"note",4) == 0)
-            {
-                File::NoteChunk note;
-                result += read(reinterpret_cast<char *>(&note.cuePointID),4);
-                note.text.clear();
-                int sizeOfText = temp.size - 4; // size of text stored in chunk
-                if (sizeOfText != 0)
-                {
-                    note.text.reserve(sizeOfText);
-                    char *tempChar = new char[sizeOfText];
-                    result += read(tempChar,sizeOfText);
-                    note.text = tempChar;
-                    delete tempChar;
-                    //qDebug() << "note text: " << note.text;
-                }
-                listNotes_.append(note);
-            }
-        }
-        // setting parameters to Markers QVector
-        marker->clear();
-        for(quint16 i=0; i<file.cue.numCuePoints;i++)
-        {
-            //setting text
-            QString temp = "";
-            if (!listLtxt_.isEmpty())
-                temp += listLtxt_[i].text+ "\n";
-            if (!listLabels_.isEmpty())
-                temp += listLabels_[i].text+ "\n";
-            if (!listNotes_.isEmpty())
-                temp += listNotes_[i].text + "\n";
-            marker->append(Markers(file.cue.list[i].sampleOffset,listLtxt_[i].text,listLabels_[i].text));
-        }
-        return result; //and of file, returning
-    }
-    else //at EOF
-        return -2;
-    return result;
-}
-
-void WaveFile::detectBeeps(int channelId)
+void WaveFile::detectBeeps(QVector<Markers> *markers, int channelId)
 {
     if (!seek(posDataBeg()))
     {
@@ -266,6 +132,7 @@ void WaveFile::detectBeeps(int channelId)
     bool beepTakes = false;
     double avgAmplitude;
     double seconds;
+    int beginBuffer; //begin offset of detected marker
     // buffers counting loop
     for (quint32 i=0; i<buffersCount; i++)
     {
@@ -287,9 +154,11 @@ void WaveFile::detectBeeps(int channelId)
             qDebug() << "Beep starts on" << seconds << "seconds, stops on" << (double) i * bufferSize / file.header.wave.sampleRate << "seconds";
             xmlSignal.setAttribute("endTime",QString::number((double) i * bufferSize / file.header.wave.sampleRate,'f',1));
             xmlRoot.appendChild(xmlSignal);
+            markers->append(Markers(beginBuffer,i*bufferSize,"Detected"));
         }
         else if (!beepTakes && avgAmplitude > beepThreshold) { // origin of signal
             beepTakes = true;
+            beginBuffer = i*bufferSize;
             seconds = (double) i * bufferSize / file.header.wave.sampleRate;
             xmlSignal = xml.createElement("signal");
             xmlSignal.setAttribute("originTime",QString::number(seconds,'f',1));
@@ -299,7 +168,8 @@ void WaveFile::detectBeeps(int channelId)
     {
         qDebug() << "Beep starts on" << seconds << "seconds, stops on" << (double) buffersCount * bufferSize / file.header.wave.sampleRate << "seconds";
         xmlSignal.setAttribute("endTime",QString::number((double) buffersCount * bufferSize / file.header.wave.sampleRate,'f',1));
-        xmlRoot.appendChild(xmlSignal);
+        xmlRoot.appendChild(xmlSignal);        
+        markers->append(Markers(beginBuffer,buffersCount*bufferSize,"Detected"));
     }
     qDebug() << xml.toString(4);
     // saving xml file
