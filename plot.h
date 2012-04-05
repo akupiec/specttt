@@ -29,7 +29,7 @@ public:
     // ??? what exacly this one should do ?
     bool saveFile(QString filePath);
     // ...........
-    bool splitFile(QString filePath);
+    bool splitFile();
 
 signals:
     void MaximumOffset(int); // emit max width of plot

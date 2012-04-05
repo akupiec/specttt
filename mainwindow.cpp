@@ -27,11 +27,19 @@ MainWindow::~MainWindow()
 void MainWindow::on_actionImageGenerator_triggered()
 {
     QString filePath = QFileDialog::getOpenFileName(this, tr("Open File"),QDir::homePath(),tr("WAV files")+" (*.wav)");
-    ui->plot->openFile(filePath);
+    if(filePath != "")
+        ui->plot->openFile(filePath);
+    else
+        qDebug() << "Can't open file - should be in message box"; // hange it to message box
 }
 
 void MainWindow::setScrollBarMaximumValue(int value)
 {
     ui->horizontalScrollBar->setMinimum(0);
     ui->horizontalScrollBar->setMaximum(value);
+}
+
+void MainWindow::on_actionSplit_triggered()
+{
+    ui->plot->splitFile();
 }

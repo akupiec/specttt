@@ -12,13 +12,14 @@ class WaveFile : public QFile
 
 public:
     // Constructors
+    WaveFile(){};
     WaveFile(const QString& name);
     ~WaveFile();
     //Reading Samples
     qint64 readData(double *buffer, int bufferSize, int channelId);
     qint64 readData(double *buffer, int bufferSize, qint64 offset, int channelId);
     //Auto detecting Markers
-    void detectBeeps(QVector<Markers> *markers, int channelId = 0);
+    void detectBeeps(QVector<Markers> *markers, int channelId = 0);   
     //Returning frequency
     int frequency() const { return file.header.wave.sampleRate * 0.5; }
     //Returning number of samples in file
@@ -29,11 +30,6 @@ public:
     double time() const {return (double)file.header.data.descriptor.size / file.header.wave.byteRate; }
     //Returning max fileOffset
     int maxOffset() const{return file.header.data.descriptor.size;}
-
-    //Calculating offset form given time
-    //int timeToOffset(double time) {return (int)((time*file.header.data.descriptor.size)/time());}
-    //Calculating time form given offset
-    //double offsetToTime(int offset) {return (double)offset/file.header.wave.sampleRate;}
 
 private:
     // Return the END of data chunk position in the file
@@ -86,6 +82,11 @@ private:
 
     }file;
     qint64 dataOffset; // data chunk position offset in the file
+
+public:
+    // Splitting file
+    bool splitFile(Markers *splitingMarker, bool overWrite = false);
+    qint64 saveNewHeader(quint32 fileSize , File::CombinedHeader *oldHeader);
 };
 
 #endif // WAVEFILE_H

@@ -10,9 +10,10 @@
 
 WaveFile::WaveFile(const QString &name) : QFile(name)
 {
-    open(QIODevice::ReadOnly);
+    Q_ASSERT(open(QIODevice::ReadOnly));
     readHeader();
 }
+
 WaveFile::~WaveFile()
 {
     close();
@@ -184,4 +185,51 @@ void WaveFile::detectBeeps(QVector<Markers> *markers, int channelId)
     }
     QTextStream stream (&file);
     xml.save(stream,4,QDomNode::EncodingFromDocument);
+}
+
+bool WaveFile::splitFile(Markers *splitingMarker, bool overWrite)
+{
+    QString newName = splitingMarker->label();
+    WaveFile newFile;
+    // protecting from rewrite old file
+    int number = 1;
+    while(1)
+    {
+        newFile.setFileName(newName + ".wav");
+        if(newFile.exists() && overWrite != true)
+            newName = splitingMarker->label() + "_" + QString().number(number);
+        else
+            break; //if file of name "newName" not exist break the loop
+        number++;
+    }
+    if(newFile.open(QIODevice::WriteOnly)) //opening newFile
+    {
+        //writing new header
+        int size = splitingMarker->endOffset()-splitingMarker->beginOffset();
+        if(newFile.saveNewHeader(size, &this->file.header) == -1)
+            return false;
+        //writing samples
+        Q_ASSERT(seek(posDataBeg()+splitingMarker->beginOffset()));
+        QByteArray temp_samples = read(size);
+        newFile.write(temp_samples);
+
+        //newFile.close(); <- unnessesery
+    }
+    else
+        qDebug() << "nie można utworzyć pliku:" << newName;
+    return true;
+}
+
+qint64 WaveFile::saveNewHeader(quint32 fileSize, File::CombinedHeader *oldHeader)
+{
+    //copy whole old header
+    this->file.header = *oldHeader;
+    //new file size
+    this->file.header.riff.descriptor.size = fileSize - 8;
+    //new data chunk size
+    this->file.header.data.descriptor.size = fileSize - this->file.headerLength;
+    //saving
+    if (this->openMode() == QIODevice::WriteOnly)
+        return write(reinterpret_cast<char *>(&file.header),file.headerLength); // returns the number of bytes that were actually written, or -1 if an error occurred.
+    return -1; //error
 }

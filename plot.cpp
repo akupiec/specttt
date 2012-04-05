@@ -351,3 +351,8 @@ void Plot::detectBeeps(int channelId)
         file->detectBeeps(&markerList,channelId);
     this->update();
 }
+
+bool Plot::splitFile()
+{
+    file->splitFile(&markerList[0]);
+}
