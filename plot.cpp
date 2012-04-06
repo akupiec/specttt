@@ -27,11 +27,34 @@ Plot::~Plot()
     delete img0; img0 = 0;
     delete img1; img1 = 0;
     delete generator; generator = 0;
-    delete settings;
+    delete settings; settings = 0;
+}
+
+void Plot::resetPlot()
+{
+    //disconnecting old generator
+    disconnect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
+
+    //destroing all objects
+    delete file; file = 0;
+    delete img0; img0 = 0;
+    delete img1; img1 = 0;
+    delete generator; generator = 0;
+    delete settings; settings = new Settings(SPECT_PROJECT_NAME);
+
+    //resetting mouse confing
+    img_offset = 0;
+    draggingEnabled =0;
+    emit ImgOffset(img_offset);
+
+    //resetting generation config
+    img_nr = 0;
 }
 
 bool Plot::openFile(QString filePath)
 {
+    if (file) // if file already exist
+        resetPlot(); // reset all settings
     FFT::FFT fft;
     double *buffer = new double [fft.bufferSize()]; //FFT
     //setting temp file
@@ -75,7 +98,6 @@ bool Plot::openFile(QString filePath)
     }
     tempFile.close();
     qDebug() << tempFile.fileName();
-    file->readMarkers(&markerList);
     generator = new ImageGenerator(file, &tempFile, settings->colors(), this);
     generator->setZoomFactor(imgZoom);
     connect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));

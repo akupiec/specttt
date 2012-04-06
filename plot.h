@@ -40,6 +40,9 @@ private slots:
     void imageGenerated(); // finished generation of new img
 
 private:
+    //Resetting all setting, should be called before opening new file
+    void resetPlot();
+
     //FFTFile
     int maxFFToffset;
 
