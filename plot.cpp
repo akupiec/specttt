@@ -4,8 +4,6 @@
 #include "plot.h"
 #include "settings.h"
 
-#define AX_X_DESC_SPACE 30
-#define AX_Y_DESC_SPACE 60
 #define SPECT_PROJECT_NAME "Spect2"
 
 Plot::Plot(QWidget *parent) :
@@ -28,11 +26,34 @@ Plot::~Plot()
     delete img0; img0 = 0;
     delete img1; img1 = 0;
     delete generator; generator = 0;
-    delete settings;
+    delete settings; settings = 0;
+}
+
+void Plot::resetPlot()
+{
+    //disconnecting old generator
+    disconnect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
+
+    //destroing all objects
+    delete file; file = 0;
+    delete img0; img0 = 0;
+    delete img1; img1 = 0;
+    delete generator; generator = 0;
+    delete settings; settings = new Settings(SPECT_PROJECT_NAME);
+
+    //resetting mouse confing
+    img_offset = 0;
+    draggingEnabled =0;
+    emit ImgOffset(img_offset);
+
+    //resetting markers
+    markerList.clear();
 }
 
 bool Plot::openFile(QString filePath)
 {
+    if (file) // if file already exist
+        resetPlot(); // reset all settings
     FFT::FFT fft;
     double *buffer = new double [fft.bufferSize()]; //FFT
     //setting temp file
@@ -80,8 +101,8 @@ bool Plot::openFile(QString filePath)
     generator->setZoomFactor(imgZoom);
     connect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
 
-    img_nr = 0;
-    max_img_offset = maxFFToffset*imgZoom-this->width()+AX_Y_DESC_SPACE+frameWidth;
+    img_nr = 0;    
+    setMaxImgOffset();
     emit MaximumOffset(max_img_offset);
     generate(img_nr,0);
     return true;
@@ -184,7 +205,7 @@ void Plot::resizeEvent(QResizeEvent *)
     img_offset = 0;
     generate(img_nr,0);
     //emitning new parametrs
-    max_img_offset = maxFFToffset*imgZoom-this->width()+AX_Y_DESC_SPACE+frameWidth;
+    setMaxImgOffset();
     emit MaximumOffset(max_img_offset);
     emit ImgOffset(img_offset);
 }
