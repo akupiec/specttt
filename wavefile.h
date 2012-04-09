@@ -30,6 +30,8 @@ public:
     double time() const {return (double)file.header.data.descriptor.size / file.header.wave.byteRate; }
     //Returning max fileOffset
     int maxOffset() const{return file.header.data.descriptor.size;}
+    //Returning amout bits per sample
+    quint16 bitsPerSample() const{return file.header.wave.bitsPerSample;}
 
 private:
     // Return the END of data chunk position in the file

@@ -271,8 +271,12 @@ void Plot::mouseReleaseEvent(QMouseEvent *)
 {
     if(draggingEnabled) //disable moving plot by dragging
         draggingEnabled = false;
-    markerIndexdragging = -1; //disable dragging markers
-    this->setCursor(Qt::ArrowCursor);
+    if(markerIndexdragging != -1) //disable dragging markers
+    {
+        markerList[markerIndexdragging].correctOffsets(file->bitsPerSample());
+        markerIndexdragging = -1;
+        this->setCursor(Qt::ArrowCursor);
+    }
 }
 
 void Plot::mouseMoveEvent(QMouseEvent *e)
@@ -373,7 +377,8 @@ void Plot::detectBeeps(int channelId)
     this->update();
 }
 
-bool Plot::splitFile()
+void Plot::splitFile()
 {
-    file->splitFile(&markerList[0]);
+    for(int i =0; i< markerList.count(); i++)
+        file->splitFile(&markerList[i]);
 }

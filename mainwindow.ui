@@ -92,7 +92,10 @@
   </action>
   <action name="actionSplit">
    <property name="text">
-    <string>split</string>
+    <string>Split</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
  </widget>

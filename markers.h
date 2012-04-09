@@ -8,6 +8,7 @@ public:
     Markers(quint32 beginOffset, quint32 endOffset, QString label, QString note = "");
     Markers(){};
 
+    //Label will be name of file
     void setLabel(QString label){_label = label;}
     QString label(){return _label;}
 
@@ -19,6 +20,9 @@ public:
 
     void setEndOffset(quint32 offset){_fileEndOffset = offset;}
     quint32 endOffset(){return _fileEndOffset;}
+
+    //Correcting offsets to pretend being setted inside sample
+    void correctOffsets(quint16 bitsPerSample);
 
 private:
     quint32 _fileBeginOffset;

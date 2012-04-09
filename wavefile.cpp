@@ -192,7 +192,8 @@ bool WaveFile::splitFile(Markers *splitingMarker, bool overWrite)
     QString newName = splitingMarker->label();
     WaveFile newFile;
     // protecting from rewrite old file
-    int number = 1;
+// DANGEROUS infinite loop !
+    int number = 0;
     while(1)
     {
         newFile.setFileName(newName + ".wav");
@@ -212,11 +213,12 @@ bool WaveFile::splitFile(Markers *splitingMarker, bool overWrite)
         Q_ASSERT(seek(posDataBeg()+splitingMarker->beginOffset()));
         QByteArray temp_samples = read(size);
         newFile.write(temp_samples);
-
-        //newFile.close(); <- unnessesery
     }
     else
-        qDebug() << "nie można utworzyć pliku:" << newName;
+    {
+        QMessageBox(QMessageBox::Critical,tr("Critical"),tr("File ") + newName + tr(" can not be created"));
+        return false;
+    }
     return true;
 }
 

@@ -29,10 +29,8 @@ public:
 
     //Reading File / creating WaveFile object
     bool openFile(QString filePath);
-    // ??? what exacly this one should do ?
-    bool saveFile(QString filePath);
-    // ...........
-    bool splitFile();
+    //Splitting Opened Wave File where splitters are markers
+    void splitFile();
 
 signals:
     void MaximumOffset(int); // emit max width of plot
