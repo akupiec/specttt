@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui xml
 
 TARGET = Spect2
 TEMPLATE = app
@@ -17,7 +17,8 @@ SOURCES += main.cpp\
     plot.cpp \
     markers.cpp \
     imagegenerator.cpp \
-    settings.cpp
+    settings.cpp \
+    xml.cpp
 
 HEADERS  += mainwindow.h \
     wavefile.h \
@@ -26,12 +27,15 @@ HEADERS  += mainwindow.h \
     markers.h \
     imagegenerator.h \
     cyclicqueue.h \
-    settings.h
+    settings.h \
+    xml.h
 
 FORMS    += mainwindow.ui
 
 OTHER_FILES += \
     TODO
+
+
 
 
 

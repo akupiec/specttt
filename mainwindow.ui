@@ -52,7 +52,7 @@
      <x>0</x>
      <y>0</y>
      <width>587</width>
-     <height>23</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuTest">
@@ -60,6 +60,8 @@
      <string>Test</string>
     </property>
     <addaction name="actionImageGenerator"/>
+    <addaction name="actionBeep_detect"/>
+    <addaction name="actionSplit"/>
    </widget>
    <addaction name="menuTest"/>
   </widget>
@@ -78,6 +80,22 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+G</string>
+   </property>
+  </action>
+  <action name="actionBeep_detect">
+   <property name="text">
+    <string>Beep detect</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
+   </property>
+  </action>
+  <action name="actionSplit">
+   <property name="text">
+    <string>Split</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
  </widget>

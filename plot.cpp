@@ -4,8 +4,6 @@
 #include "plot.h"
 #include "settings.h"
 
-#define AX_X_DESC_SPACE 30
-#define AX_Y_DESC_SPACE 60
 #define SPECT_PROJECT_NAME "Spect2"
 
 Plot::Plot(QWidget *parent) :
@@ -13,7 +11,8 @@ Plot::Plot(QWidget *parent) :
 {
     file = 0;
     img_offset = 0;
-    draggingEnabled =0;
+    draggingEnabled =0; // disable moving plot
+    markerIndexdragging = -1; //disable dragging markers
     img0 = 0;
     img1 = 0;
     img_nr = 0;
@@ -29,11 +28,36 @@ Plot::~Plot()
     delete img1; img1 = 0;
     delete generator0; generator0 = 0;
     delete generator1; generator1 = 0;
-    delete settings;
+    delete settings; settings = 0;
+}
+
+void Plot::resetPlot()
+{
+    //disconnecting old generator
+    disconnect(generator0, SIGNAL(finished()), this, SLOT(imageGenerated()));
+    disconnect(generator1, SIGNAL(finished()), this, SLOT(imageGenerated()));
+
+    //destroing all objects
+    delete file; file = 0;
+    delete img0; img0 = 0;
+    delete img1; img1 = 0;
+    delete generator0; generator0 = 0;
+    delete generator1; generator1 = 0;
+    delete settings; settings = new Settings(SPECT_PROJECT_NAME);
+
+    //resetting mouse confing
+    img_offset = 0;
+    draggingEnabled =0;
+    emit ImgOffset(img_offset);
+
+    //resetting markers
+    markerList.clear();
 }
 
 bool Plot::openFile(QString filePath)
 {
+    if (file) // if file already exist
+        resetPlot(); // reset all settings
     FFT::FFT fft;
     double *buffer = new double [fft.bufferSize()]; //FFT
     //setting temp file
@@ -77,7 +101,6 @@ bool Plot::openFile(QString filePath)
     }
     tempFile.close();
     qDebug() << tempFile.fileName();
-    file->readMarkers(&markerList);
     generator0 = new ImageGenerator(file, &tempFile, settings->colors(), this);
     generator1 = new ImageGenerator(file, &tempFile, settings->colors(), this);
     generator0->setZoomFactor(imgZoom);
@@ -85,8 +108,8 @@ bool Plot::openFile(QString filePath)
     connect(generator0, SIGNAL(finished()), this, SLOT(imageGenerated()));
     connect(generator1, SIGNAL(finished()), this, SLOT(imageGenerated()));
 
-    img_nr = 0;
-    max_img_offset = maxFFToffset*imgZoom-this->width()+AX_Y_DESC_SPACE+frameWidth;
+    img_nr = 0;    
+    setMaxImgOffset();
     emit MaximumOffset(max_img_offset);
     generate(img_nr,0);
     return true;
@@ -131,7 +154,15 @@ void Plot::paintEvent(QPaintEvent *)
             }
         }
     }
+
+    //markres
+    painter.setPen(QPen(QBrush(Qt::NoBrush),0));
+    painter.setBrush(QColor(0,0,255,100));
+    for(int i=0; i<markerList.count();i++)
+        painter.drawRect(frameWidth+offsetFileToOffsetFFT(markerList[i].beginOffset())-img_offset,0,offsetFileToOffsetFFT(markerList[i].endOffset()-markerList[i].beginOffset()),this->height()-AX_X_DESC_SPACE);
+
     //axis background
+    painter.setBrush(Qt::black);
     painter.drawRect(this->width()-AX_Y_DESC_SPACE,0,AX_Y_DESC_SPACE,this->height()); // background for axis Y
     painter.drawRect(0,this->height()-AX_X_DESC_SPACE,this->width(),AX_X_DESC_SPACE); // background for axis
 
@@ -185,7 +216,7 @@ void Plot::resizeEvent(QResizeEvent *)
     if(generator0 && generator0->isFinished())
         generate(img_nr,0);
     //emitning new parametrs
-    max_img_offset = maxFFToffset*imgZoom-this->width()+AX_Y_DESC_SPACE+frameWidth;
+    setMaxImgOffset();
     emit MaximumOffset(max_img_offset);
     emit ImgOffset(img_offset);
 }
@@ -216,12 +247,45 @@ void Plot::mousePressEvent(QMouseEvent *e)
     oldMousePos = e->pos().x();
     if (e->button() == Qt::LeftButton && !draggingEnabled) // enable moving plot by dragging
         draggingEnabled = true;
+    if (e->button() == Qt::RightButton) // editing markers
+    {
+        for(int i=0; i<markerList.count(); i++)
+        {
+            int begin = offsetFileToOffsetFFT(markerList[i].beginOffset())-img_offset;
+            int end = offsetFileToOffsetFFT(markerList[i].endOffset())-img_offset;
+
+            if(e->pos().x() > begin+5 && e->pos().x() < end - 5) // moving whole marker
+            {
+                this->setCursor(Qt::SizeAllCursor);
+                markerIndexdragging = i;
+                markerEdgedragging = -1;
+            }
+            else if (e->pos().x() > begin - 5 && e->pos().x() < begin +5) // moving left edge of marker
+            {
+                this->setCursor(Qt::SizeHorCursor);
+                markerIndexdragging = i;
+                markerEdgedragging = 0;
+            }
+            else if (e->pos().x() > end - 5 && e->pos().x() < end +5) // moving right edge of marker
+            {
+                this->setCursor(Qt::SizeHorCursor);
+                markerIndexdragging = i;
+                markerEdgedragging = 1;
+            }
+        }
+    }
 }
 
 void Plot::mouseReleaseEvent(QMouseEvent *)
 {
     if(draggingEnabled) //disable moving plot by dragging
         draggingEnabled = false;
+    if(markerIndexdragging != -1) //disable dragging markers
+    {
+        markerList[markerIndexdragging].correctOffsets(file->bitsPerSample());
+        markerIndexdragging = -1;
+        this->setCursor(Qt::ArrowCursor);
+    }
 }
 
 void Plot::mouseMoveEvent(QMouseEvent *e)
@@ -234,9 +298,37 @@ void Plot::mouseMoveEvent(QMouseEvent *e)
         else if (img_offset > max_img_offset) // end of file protection
             img_offset = max_img_offset;
         moveGenerate(); //generate new images
-        oldMousePos = e->pos().x(); //temp mouse position used in next step
         emit ImgOffset(img_offset); // emiting img_offset to scrollbar
     }
+    if(markerIndexdragging != -1)
+    {
+        if(markerEdgedragging == -1) //drag whole marker
+        {
+            int newBegin = markerList[markerIndexdragging].beginOffset() + offsetFFTToOffsetFile(e->pos().x()-oldMousePos);
+            int newEnd = markerList[markerIndexdragging].endOffset() + offsetFFTToOffsetFile(e->pos().x()-oldMousePos);
+            if (newBegin >=0 && newEnd <= file->maxOffset())
+            {
+                markerList[markerIndexdragging].setBeginOffset(newBegin);
+                markerList[markerIndexdragging].setEndOffset(newEnd);
+            }
+        }
+        else if(markerEdgedragging == 0)  //drag left edge of marker
+        {
+            int newBegin = markerList[markerIndexdragging].beginOffset() + offsetFFTToOffsetFile(e->pos().x()-oldMousePos);
+            int end = markerList[markerIndexdragging].endOffset();
+            if (newBegin >=0 && newBegin < end - offsetFFTToOffsetFile(20))
+                markerList[markerIndexdragging].setBeginOffset(newBegin);
+        }
+        else if(markerEdgedragging == 1)  //drag left edge of marker
+        {
+            int begin = markerList[markerIndexdragging].beginOffset();
+            int newEnd = markerList[markerIndexdragging].endOffset() + offsetFFTToOffsetFile(e->pos().x()-oldMousePos);
+            if (newEnd <= file->maxOffset() && begin < newEnd - offsetFFTToOffsetFile(20))
+                markerList[markerIndexdragging].setEndOffset(newEnd);
+        }
+        this->update(); //repaint plot
+    }
+    oldMousePos = e->pos().x(); //temp mouse position used in next step
 }
 
 void Plot::setImgOffset(int offset)
@@ -280,10 +372,22 @@ inline void Plot::moveGenerate()
                // qDebug() << "generacja wsteczna: " << offset <<", w:"<< !img_nr << "gdzie jest:" << offset+1 << img_nr;
                 generate(!img_nr,offset);
             }
-
         }
     }
 
     img_offset_old = img_offset; //setting curent offset to old one
     this->update();
+}
+
+void Plot::detectBeeps(int channelId)
+{
+    if(file)
+        file->detectBeeps(&markerList,channelId);
+    this->update();
+}
+
+void Plot::splitFile()
+{
+    for(int i =0; i< markerList.count(); i++)
+        file->splitFile(&markerList[i]);
 }
