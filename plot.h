@@ -52,7 +52,8 @@ private:
     int img_realWidth; //width of img without rounding error
 
     //generating
-    ImageGenerator *generator; //pointer to thread class
+    ImageGenerator *generator0; //pointer to thread class
+    ImageGenerator *generator1; //pointer to thread class
     inline void generate(bool img_nr = 0, int offset = 0); //using ImageGenerator for new img
     inline void moveGenerate(); //calling porper generate function based on current img_offset
     bool img_nr; //displeing img0 or img1
