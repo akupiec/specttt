@@ -10,7 +10,8 @@
 
 WaveFile::WaveFile(const QString &name) : QFile(name)
 {
-    Q_ASSERT(open(QIODevice::ReadOnly));
+    if(!open(QIODevice::ReadOnly))
+        qDebug() << "error - WaveFile(QString) open file error";
     readHeader();
 }
 
