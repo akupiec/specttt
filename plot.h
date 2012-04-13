@@ -66,7 +66,7 @@ private:
     static const int grindVerticalSpace = 40;
     static const int grindHorizontalSpace = 20;
     static const int generateImgBuffor = 1000; // have to be calculated how much extra ram is needed for it (at 20000 is using extra ~280-380 Mb)
-    static const float imgZoom = 1.2;
+    static const float imgZoom = 2.2;
 
     //moving
     int img_offset; // the same as FFT_offset
