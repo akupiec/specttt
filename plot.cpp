@@ -4,8 +4,6 @@
 #include "plot.h"
 #include "settings.h"
 
-#define AX_X_DESC_SPACE 30
-#define AX_Y_DESC_SPACE 60
 #define SPECT_PROJECT_NAME "Spect2"
 
 Plot::Plot(QWidget *parent) :
@@ -69,7 +67,7 @@ bool Plot::openFile(QString filePath)
     tempStream.setVersion(12);
     //wave file
     file = new WaveFile(filePath);
-    quint16 halfFFTBufferSize = fft.bufferSize() / 2;
+    halfFFTBufferSize = fft.bufferSize() / 2;
     maxFFToffset = 2 * (int(double(file->samples()) / halfFFTBufferSize + 1.) - 1);
     quint16 tempFileHeight = 0;
     int tempFileWidth = 0;
@@ -100,10 +98,10 @@ bool Plot::openFile(QString filePath)
     tempFile.close();
     qDebug() << tempFile.fileName();
     generator = new ImageGenerator(file, &tempFile, settings->colors(), this);
-    generator->setZoomFactor(imgZoom);
+    generator->setZoomFactorX(imgZoom);
     connect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
 
-    img_nr = 0;    
+    img_nr = 0;
     setMaxImgOffset();
     emit MaximumOffset(max_img_offset);
     generate(img_nr,0);
@@ -174,7 +172,7 @@ void Plot::paintEvent(QPaintEvent *)
         offset = (i*grindVerticalSpace)+frameWidth;
         painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
         if (file != 0)
-            value.setNum((((offset-frameWidth+img_offset)*file->time()/maxFFToffset)/generator->zoomFactor()),'f',3);
+            value.setNum((((offset-frameWidth+img_offset)*file->time()/maxFFToffset)/generator->zoomFactorX()),'f',3);
         else
             value = "0.0";
         painter.drawText(offset,this->height()-AX_X_DESC_SPACE+frameWidth+15,value);
@@ -215,22 +213,20 @@ void Plot::resizeEvent(QResizeEvent *)
 inline void Plot::generate(bool nr, int offset)
 {
     //work only when generator exist (file reader) and is not busy
-    if (generator)
+    if (generator && !generator->isRunning())
     {
-        if (!generator->isRunning())
+        generator->setZoomFactorY((double)this->plotHeight()/halfFFTBufferSize);
+        if(!nr)
         {
-            if(!nr)
-            {
-                delete img0; //deleting old img
-                img0 = generator->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom); // generating new one
-                last_generated_offset = offset;
-            }
-            else
-            {
-                delete img1;
-                img1 = generator->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom);
-                last_generated_offset = offset;
-            }
+            delete img0; //deleting old img
+            img0 = generator->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom); // generating new one
+            last_generated_offset = offset;
+        }
+        else
+        {
+            delete img1;
+            img1 = generator->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom);
+            last_generated_offset = offset;
         }
     }
 }
@@ -383,4 +379,14 @@ void Plot::splitFile()
 {
     for(int i =0; i< markerList.count(); i++)
         file->splitFile(&markerList[i]);
+}
+
+int Plot::plotWidth()
+{
+    return this->width() - AX_Y_DESC_SPACE - 2*frameWidth;
+}
+
+int Plot::plotHeight()
+{
+    return this->height() - AX_X_DESC_SPACE - 2*frameWidth;
 }

@@ -33,8 +33,8 @@ void ImageGenerator::run()
         fftSamples = d.fftSamples;
         fftData->seek(fftDataHeaderSize + height * fftRange.first);
         short extColumns = 0; // additional FFT columns
-        if (zoomFactor_ > 1.5)
-            extColumns = zoomFactor_ / 2;
+        if (zoomFactor_X > 1.5)
+            extColumns = zoomFactor_X / 2;
         qDebug() << "additional FFT columns:" << extColumns;
         char data;
         int uData;
@@ -105,7 +105,7 @@ void ImageGenerator::run()
             delete [] buffer;
             delete [] bufferFFT;
         }
-        *img = img->scaled((zoomFactor_-extColumns)*img->width(), (zoomFactor_-extColumns)*img->height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        *img = img->scaled((zoomFactor_X-extColumns)*img->width(), zoomFactor_Y*img->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 //        img->save("/home/marek/img.png");
         qDebug() << "Time:" << time.elapsed() << fftRange.first;
     }

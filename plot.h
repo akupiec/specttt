@@ -17,8 +17,8 @@ class Settings;
 #define AX_X_DESC_SPACE 30
 #define AX_Y_DESC_SPACE 60
 
-//klasa jest odpowiedzialna za koordynacje danych miêdzy wavefile a fft
-//jest to klasa odpowiedzialna za rysowanie wykresu*   ///// ja by to i tak wywali³ o osobnej ³atwiej bêdzie nawigowaæ danymi nie pogubimy sie co dlaczego i gdzie
+//klasa jest odpowiedzialna za koordynacje danych miÄ™dzy wavefile a fft
+//jest to klasa odpowiedzialna za rysowanie wykresu*   ///// ja by to i tak wywaliÅ‚ o osobnej Å‚atwiej bÄ™dzie nawigowaÄ‡ danymi nie pogubimy sie co dlaczego i gdzie
 class Plot : public QWidget
 {
     Q_OBJECT
@@ -31,6 +31,10 @@ public:
     bool openFile(QString filePath);
     //Splitting Opened Wave File where splitters are markers
     void splitFile();
+    // Useable width of plot
+    int plotWidth();
+    // Useable height of plot
+    int plotHeight();
 
 signals:
     void MaximumOffset(int); // emit max width of plot
@@ -48,6 +52,7 @@ private:
 
     //FFTFile
     int maxFFToffset;
+    quint16 halfFFTBufferSize;
     int offsetFileToOffsetFFT(quint32 offset) {return (offset*maxFFToffset/(double)file->maxOffset())*imgZoom;}
     quint32 offsetFFTToOffsetFile(int offset) {return (offset/imgZoom)*file->maxOffset()/maxFFToffset;}
 
