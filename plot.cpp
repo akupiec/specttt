@@ -1,12 +1,6 @@
 #include <QDebug>
 #include <QDataStream>
 #include <QDir>
-#include <QtXml/QDomDocument>
-#include <QtXml/QDomElement>
-#include <QFile>
-#include <QFileDialog>
-#include <QMessageBox>
-#include <cmath>
 #include "plot.h"
 #include "settings.h"
 
@@ -19,7 +13,8 @@ Plot::Plot(QWidget *parent) :
 {
     file = 0;
     img_offset = 0;
-    draggingEnabled =0;
+    draggingEnabled =0; // disable moving plot
+    markerIndexdragging = -1; //disable dragging markers
     img0 = 0;
     img1 = 0;
     img_nr = 0;
@@ -33,11 +28,34 @@ Plot::~Plot()
     delete img0; img0 = 0;
     delete img1; img1 = 0;
     delete generator; generator = 0;
-    delete settings;
+    delete settings; settings = 0;
+}
+
+void Plot::resetPlot()
+{
+    //disconnecting old generator
+    disconnect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
+
+    //destroing all objects
+    delete file; file = 0;
+    delete img0; img0 = 0;
+    delete img1; img1 = 0;
+    delete generator; generator = 0;
+    delete settings; settings = new Settings(SPECT_PROJECT_NAME);
+
+    //resetting mouse confing
+    img_offset = 0;
+    draggingEnabled =0;
+    emit ImgOffset(img_offset);
+
+    //resetting markers
+    markerList.clear();
 }
 
 bool Plot::openFile(QString filePath)
 {
+    if (file) // if file already exist
+        resetPlot(); // reset all settings
     FFT::FFT fft;
     double *buffer = new double [fft.bufferSize()]; //FFT
     //setting temp file
@@ -81,13 +99,12 @@ bool Plot::openFile(QString filePath)
     }
     tempFile.close();
     qDebug() << tempFile.fileName();
-    file->readMarkers(&markerList);
     generator = new ImageGenerator(file, &tempFile, settings->colors(), this);
     generator->setZoomFactor(imgZoom);
     connect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
 
-    img_nr = 0;
-    max_img_offset = maxFFToffset*imgZoom-this->width()+AX_Y_DESC_SPACE+frameWidth;
+    img_nr = 0;    
+    setMaxImgOffset();
     emit MaximumOffset(max_img_offset);
     generate(img_nr,0);
     return true;
@@ -129,7 +146,15 @@ void Plot::paintEvent(QPaintEvent *)
             }
         }
     }
+
+    //markres
+    painter.setPen(QPen(QBrush(Qt::NoBrush),0));
+    painter.setBrush(QColor(0,0,255,100));
+    for(int i=0; i<markerList.count();i++)
+        painter.drawRect(frameWidth+offsetFileToOffsetFFT(markerList[i].beginOffset())-img_offset,0,offsetFileToOffsetFFT(markerList[i].endOffset()-markerList[i].beginOffset()),this->height()-AX_X_DESC_SPACE);
+
     //axis background
+    painter.setBrush(Qt::black);
     painter.drawRect(this->width()-AX_Y_DESC_SPACE,0,AX_Y_DESC_SPACE,this->height()); // background for axis Y
     painter.drawRect(0,this->height()-AX_X_DESC_SPACE,this->width(),AX_X_DESC_SPACE); // background for axis
 
@@ -182,7 +207,7 @@ void Plot::resizeEvent(QResizeEvent *)
     img_offset = 0;
     generate(img_nr,0);
     //emitning new parametrs
-    max_img_offset = maxFFToffset*imgZoom-this->width()+AX_Y_DESC_SPACE+frameWidth;
+    setMaxImgOffset();
     emit MaximumOffset(max_img_offset);
     emit ImgOffset(img_offset);
 }
@@ -215,12 +240,45 @@ void Plot::mousePressEvent(QMouseEvent *e)
     oldMousePos = e->pos().x();
     if (e->button() == Qt::LeftButton && !draggingEnabled) // enable moving plot by dragging
         draggingEnabled = true;
+    if (e->button() == Qt::RightButton) // editing markers
+    {
+        for(int i=0; i<markerList.count(); i++)
+        {
+            int begin = offsetFileToOffsetFFT(markerList[i].beginOffset())-img_offset;
+            int end = offsetFileToOffsetFFT(markerList[i].endOffset())-img_offset;
+
+            if(e->pos().x() > begin+5 && e->pos().x() < end - 5) // moving whole marker
+            {
+                this->setCursor(Qt::SizeAllCursor);
+                markerIndexdragging = i;
+                markerEdgedragging = -1;
+            }
+            else if (e->pos().x() > begin - 5 && e->pos().x() < begin +5) // moving left edge of marker
+            {
+                this->setCursor(Qt::SizeHorCursor);
+                markerIndexdragging = i;
+                markerEdgedragging = 0;
+            }
+            else if (e->pos().x() > end - 5 && e->pos().x() < end +5) // moving right edge of marker
+            {
+                this->setCursor(Qt::SizeHorCursor);
+                markerIndexdragging = i;
+                markerEdgedragging = 1;
+            }
+        }
+    }
 }
 
 void Plot::mouseReleaseEvent(QMouseEvent *)
 {
     if(draggingEnabled) //disable moving plot by dragging
         draggingEnabled = false;
+    if(markerIndexdragging != -1) //disable dragging markers
+    {
+        markerList[markerIndexdragging].correctOffsets(file->bitsPerSample());
+        markerIndexdragging = -1;
+        this->setCursor(Qt::ArrowCursor);
+    }
 }
 
 void Plot::mouseMoveEvent(QMouseEvent *e)
@@ -233,9 +291,37 @@ void Plot::mouseMoveEvent(QMouseEvent *e)
         else if (img_offset > max_img_offset) // end of file protection
             img_offset = max_img_offset;
         moveGenerate(); //generate new images
-        oldMousePos = e->pos().x(); //temp mouse position used in next step
         emit ImgOffset(img_offset); // emiting img_offset to scrollbar
     }
+    if(markerIndexdragging != -1)
+    {
+        if(markerEdgedragging == -1) //drag whole marker
+        {
+            int newBegin = markerList[markerIndexdragging].beginOffset() + offsetFFTToOffsetFile(e->pos().x()-oldMousePos);
+            int newEnd = markerList[markerIndexdragging].endOffset() + offsetFFTToOffsetFile(e->pos().x()-oldMousePos);
+            if (newBegin >=0 && newEnd <= file->maxOffset())
+            {
+                markerList[markerIndexdragging].setBeginOffset(newBegin);
+                markerList[markerIndexdragging].setEndOffset(newEnd);
+            }
+        }
+        else if(markerEdgedragging == 0)  //drag left edge of marker
+        {
+            int newBegin = markerList[markerIndexdragging].beginOffset() + offsetFFTToOffsetFile(e->pos().x()-oldMousePos);
+            int end = markerList[markerIndexdragging].endOffset();
+            if (newBegin >=0 && newBegin < end - offsetFFTToOffsetFile(20))
+                markerList[markerIndexdragging].setBeginOffset(newBegin);
+        }
+        else if(markerEdgedragging == 1)  //drag left edge of marker
+        {
+            int begin = markerList[markerIndexdragging].beginOffset();
+            int newEnd = markerList[markerIndexdragging].endOffset() + offsetFFTToOffsetFile(e->pos().x()-oldMousePos);
+            if (newEnd <= file->maxOffset() && begin < newEnd - offsetFFTToOffsetFile(20))
+                markerList[markerIndexdragging].setEndOffset(newEnd);
+        }
+        this->update(); //repaint plot
+    }
+    oldMousePos = e->pos().x(); //temp mouse position used in next step
 }
 
 void Plot::setImgOffset(int offset)
@@ -279,7 +365,6 @@ inline void Plot::moveGenerate()
                // qDebug() << "generacja wsteczna: " << offset <<", w:"<< !img_nr << "gdzie jest:" << offset+1 << img_nr;
                 generate(!img_nr,offset);
             }
-
         }
     }
 
@@ -289,73 +374,13 @@ inline void Plot::moveGenerate()
 
 void Plot::detectBeeps(int channelId)
 {
-    if (!file->seek(file->posDataBeg()))
-    {
-        qWarning("detectBeeps() : seek() failed");
-        return;
-    }
-    // xml document
-    QDomDocument xml ("xml");
-    xml.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\"");
-    QDomElement xmlRoot = xml.createElement("detected");
-    xml.appendChild(xmlRoot);
-    QDomElement xmlSignal; // if it's necessary you can add text node
-    // detection variables
-    const quint16 bufferSize = file->fileStruct().header.wave.sampleRate / 10;
-    const qreal beepThreshold = 0.04;
-    double buffer[bufferSize];
-    quint32 buffersCount = file->samples() / bufferSize + 1;
-    qint64 readedData;
-    bool beepTakes = false;
-    double avgAmplitude;
-    double seconds;
-    // buffers counting loop
-    for (quint32 i=0; i<buffersCount; i++)
-    {
-        avgAmplitude = 0.0;
-        readedData = file->readData(buffer, bufferSize, channelId);
-        if (readedData < 0)
-        {
-            qWarning("detectBeeps() : readData() error met");
-            return;
-        }
-        for (quint32 j=0; j<bufferSize; j++)
-        {
-            avgAmplitude += buffer[j] * buffer[j];
-        }
-        avgAmplitude /= bufferSize;
-        avgAmplitude = sqrt(avgAmplitude);
-        if (beepTakes && avgAmplitude < beepThreshold) { // end of signal
-            beepTakes = false;
-            qDebug() << "Beep starts on" << seconds << "seconds, stops on" << (double) i * bufferSize / file->fileStruct().header.wave.sampleRate << "seconds";
-            xmlSignal.setAttribute("endTime",QString::number((double) i * bufferSize / file->fileStruct().header.wave.sampleRate,'f',1));
-            xmlRoot.appendChild(xmlSignal);
-        }
-        else if (!beepTakes && avgAmplitude > beepThreshold) { // origin of signal
-            beepTakes = true;
-            seconds = (double) i * bufferSize / file->fileStruct().header.wave.sampleRate;
-            xmlSignal = xml.createElement("signal");
-            xmlSignal.setAttribute("originTime",QString::number(seconds,'f',1));
-        }
-    }
-    if (beepTakes)
-    {
-        qDebug() << "Beep starts on" << seconds << "seconds, stops on" << (double) buffersCount * bufferSize / file->fileStruct().header.wave.sampleRate << "seconds";
-        xmlSignal.setAttribute("endTime",QString::number((double) buffersCount * bufferSize / file->fileStruct().header.wave.sampleRate,'f',1));
-        xmlRoot.appendChild(xmlSignal);
-    }
-    qDebug() << xml.toString(4);
-    // saving xml file
-    QString fileName = file->fileName();
-    QFile xmlFile(fileName.left(fileName.lastIndexOf('.')+1).append("xml"));
-    while (!xmlFile.open(QIODevice::WriteOnly))
-    {
-        QMessageBox::warning(this,tr("Permission needed"),tr("Choose path where you can write."),QMessageBox::Ok);
-        QString path = QFileDialog::getExistingDirectory(this, tr("Choose directory"),QDir::homePath());
-        if (path.isEmpty()) // when file dialog was canceled
-            return;
-        xmlFile.setFileName(path);
-    }
-    QTextStream stream (&xmlFile);
-    xml.save(stream,4,QDomNode::EncodingFromDocument);
+    if(file)
+        file->detectBeeps(&markerList,channelId);
+    this->update();
+}
+
+void Plot::splitFile()
+{
+    for(int i =0; i< markerList.count(); i++)
+        file->splitFile(&markerList[i]);
 }
