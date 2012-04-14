@@ -37,6 +37,7 @@ private:
 //    QQueue <ImageData> workQueue;
     CyclicQueue <ImageData> workQueue;
     QVector<QRgb> *colors;
+    void copy(double *source, double *destination, int count); // copy count elements of data from source array into destination array
 };
 
 #endif // IMAGEGENERATOR_H

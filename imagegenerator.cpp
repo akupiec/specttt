@@ -2,6 +2,7 @@
 #include <QTemporaryFile>
 #include <QDebug>
 #include <QTime>
+#include <cmath>
 #include "imagegenerator.h"
 #include "wavefile.h"
 #include "fft.h"
@@ -57,28 +58,36 @@ void ImageGenerator::run()
             QSize size = img->size();
             size.setWidth( size.width() * extColumns * 2);
             *img = img->scaled(size);
-            qint64 shift = height * fftRange.first + height / (2*extColumns); // wave file offset
+            short extColumnsPower = pow(2,extColumns);
+            short shift =  height / extColumnsPower; // wave file offset
             FFT::FFT fft(2 * height);
-            double *buffer = new double [fft.bufferSize()];
-            float j=0;
+            int bufferSize = img->width() * height;//fftSamples*height*extColumns;
+            double *buffer = new double [bufferSize];
+            file->readData(buffer,bufferSize,height*fftRange.first,0);
+            double *bufferFFT = new double [fft.bufferSize()];
             qDebug() << shift << height;
-            for (int x=0; x<img->width(); x++) // FFT columns loop
+            for (int x=0, i=0; x<img->width(); x++) // FFT columns loop
             {
                 if (x%(extColumns+1) != 0)
                 {
-                    file->readData(buffer,fft.bufferSize(),shift+j*fft.bufferSize(),0);
-                    fft.makeWindow(buffer);
-                    fft.countFFT(buffer);
-                    for (int y=height-1, k=0; y>=0; y--, k++)
+                    for (int j=0; j<extColumns; j++)
                     {
-                        uData = buffer[k] * 254;
-                        if (uData > 255)
-                            uData = 255;
-                        else if (uData < 0)
-                            uData = 0;
-                        img->setPixel(x,y,colors->at(uData));
+                        copy(buffer+i*height+shift*int(pow(2,j)), bufferFFT, int(fft.bufferSize()));
+                        fft.makeWindow(bufferFFT);
+                        fft.countFFT(bufferFFT);
+                        for (int y=height-1, k=0; y>=0; y--, k++)
+                        {
+                            uData = bufferFFT[k] * 254;
+                            if (uData > 255)
+                                uData = 255;
+                            else if (uData < 0)
+                                uData = 0;
+                            img->setPixel(x,y,colors->at(uData));
+                        }
+                        if (j+1 < extColumns)
+                            x++;
                     }
-                    j += 0.5;
+                    i++;
                 }
                 else // just copy from fftData into img
                 {
@@ -94,6 +103,7 @@ void ImageGenerator::run()
                 }
             }
             delete [] buffer;
+            delete [] bufferFFT;
         }
         *img = img->scaled((zoomFactor_-extColumns)*img->width(), (zoomFactor_-extColumns)*img->height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
 //        img->save("/home/marek/img.png");
@@ -118,4 +128,16 @@ QImage * ImageGenerator::plotImage(int startFFT, int stopFFT)
         start();
     }
     return d.img;
+}
+
+void ImageGenerator::copy(double *source, double *destination, int count)
+{
+    double *s = source;
+    double *d = destination;
+    for (int i=0; i<count; i++)
+    {
+        *d = *s;
+        d++;
+        s++;
+    }
 }
