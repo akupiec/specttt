@@ -17,6 +17,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->plot,SIGNAL(MaximumOffset(int)),this,SLOT(setScrollBarMaximumValue(int)));
     // ImageGenerator test
     connect(ui->actionBeep_detect, SIGNAL(triggered()), ui->plot, SLOT(detectBeeps()));
+
+    ui->tableWidget->setRowCount(2);
+    QTableWidgetItem *item = new QTableWidgetItem("AGFaawddddddddddddddddddddddddddwdawdawdawdawdawdawdadadawdAdw");
+    ui->tableWidget->setItem(0,0,item);
+    ui->tableWidget->setRowCount(3);
 }
 
 MainWindow::~MainWindow()
