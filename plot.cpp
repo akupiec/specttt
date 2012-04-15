@@ -16,7 +16,8 @@ Plot::Plot(QWidget *parent) :
     img0 = 0;
     img1 = 0;
     img_nr = 0;
-    generator = 0;
+    generator0 = 0;
+    generator1 = 0;
     settings = new Settings(SPECT_PROJECT_NAME);
 }
 
@@ -25,20 +26,23 @@ Plot::~Plot()
     delete file; file = 0;
     delete img0; img0 = 0;
     delete img1; img1 = 0;
-    delete generator; generator = 0;
+    delete generator0; generator0 = 0;
+    delete generator1; generator1 = 0;
     delete settings; settings = 0;
 }
 
 void Plot::resetPlot()
 {
     //disconnecting old generator
-    disconnect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
+    disconnect(generator0, SIGNAL(finished()), this, SLOT(imageGenerated()));
+    disconnect(generator1, SIGNAL(finished()), this, SLOT(imageGenerated()));
 
     //destroing all objects
     delete file; file = 0;
     delete img0; img0 = 0;
     delete img1; img1 = 0;
-    delete generator; generator = 0;
+    delete generator0; generator0 = 0;
+    delete generator1; generator1 = 0;
     delete settings; settings = new Settings(SPECT_PROJECT_NAME);
 
     //resetting mouse confing
@@ -97,9 +101,12 @@ bool Plot::openFile(QString filePath)
     }
     tempFile.close();
     qDebug() << tempFile.fileName();
-    generator = new ImageGenerator(file, &tempFile, settings->colors(), this);
-    generator->setZoomFactorX(imgZoom);
-    connect(generator, SIGNAL(finished()), this, SLOT(imageGenerated()));
+    generator0 = new ImageGenerator(file, &tempFile, settings->colors(), this);
+    generator1 = new ImageGenerator(file, &tempFile, settings->colors(), this);
+    generator0->setZoomFactor(imgZoom);
+    generator1->setZoomFactor(imgZoom);
+    connect(generator0, SIGNAL(finished()), this, SLOT(imageGenerated()));
+    connect(generator1, SIGNAL(finished()), this, SLOT(imageGenerated()));
 
     img_nr = 0;
     setMaxImgOffset();
@@ -123,23 +130,26 @@ void Plot::paintEvent(QPaintEvent *)
     painter.drawRect(0,0,this->width(),this->height());
 
     //painting image
-    if(generator && generator->isFinished()) // prevents casual crashes but will not print anything while thread is working
+    if(generator0)
     {
-        if (!img_nr)
+        if (!img_nr) //img0
         {
             if (img0)
             {
+                // if generator is working here will couse carash
+                if(generator0->isFinished())
                 painter.drawImage(frameWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img0);
-                if(img1)
+                if(img1 && generator1->isFinished())
                     painter.drawImage(frameWidth+img0->width()-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img1->height(),*img1);
             }
         }
-        else
+        else // img1
         {
             if(img1)
             {
+                if(generator1->isFinished())
                 painter.drawImage(frameWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img1->height(),*img1);
-                if(img0)
+                if(img0 && generator0->isFinished())
                     painter.drawImage(frameWidth+img1->width()-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img0);
             }
         }
@@ -203,7 +213,8 @@ void Plot::resizeEvent(QResizeEvent *)
     //after resize set evrithing to 0
     img_nr = 0;
     img_offset = 0;
-    generate(img_nr,0);
+    if(generator0 && generator0->isFinished())
+        generate(img_nr,0);
     //emitning new parametrs
     setMaxImgOffset();
     emit MaximumOffset(max_img_offset);
@@ -213,19 +224,19 @@ void Plot::resizeEvent(QResizeEvent *)
 inline void Plot::generate(bool nr, int offset)
 {
     //work only when generator exist (file reader) and is not busy
-    if (generator && !generator->isRunning())
+    if (generator0)
     {
         generator->setZoomFactorY((double)this->plotHeight()/halfFFTBufferSize);
-        if(!nr)
+        if(!nr && !generator0->isRunning())
         {
-            delete img0; //deleting old img
-            img0 = generator->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom); // generating new one
+            delete img0; img0 = 0; //deleting old img
+            img0 = generator0->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom); // generating new one
             last_generated_offset = offset;
         }
-        else
+        else if(!generator1->isRunning())
         {
             delete img1;
-            img1 = generator->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom);
+            img1 = generator1->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom);
             last_generated_offset = offset;
         }
     }
