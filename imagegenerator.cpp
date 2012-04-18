@@ -77,7 +77,9 @@ void ImageGenerator::run()
                         fft.countFFT(bufferFFT);
                         for (int y=height-1, k=0; y>=0; y--, k++)
                         {
-                            uData = bufferFFT[k] * 254;
+//                            uData = bufferFFT[k] * 254;
+                            uData = pow(buffer[k],1.35)*180;
+//                            qDebug() << bufferFFT[k] << uData/200. << uData;
                             if (uData > 255)
                                 uData = 255;
                             else if (uData < 0)

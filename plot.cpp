@@ -1,6 +1,7 @@
 #include <QDebug>
 #include <QDataStream>
 #include <QDir>
+#include <cmath>
 #include "plot.h"
 #include "settings.h"
 
@@ -61,7 +62,7 @@ bool Plot::openFile(QString filePath)
     FFT::FFT fft;
     double *buffer = new double [fft.bufferSize()]; //FFT
     //setting temp file
-    tempFile.setAutoRemove(false);
+    tempFile.setAutoRemove(true);
     QString tempFilePath = QDir::tempPath() + QDir::separator() + filePath.split('/').last();
     tempFilePath = tempFilePath.left(tempFilePath.lastIndexOf('.')+1) + "fft";
     tempFile.setFileName(tempFilePath);
@@ -92,10 +93,15 @@ bool Plot::openFile(QString filePath)
             fft.countFFT(buffer);
             for (qint16 i=0; i<halfFFTBufferSize; i++)
             {
-                if (buffer[i] < 1.0 && buffer[i] >= 0.0)
-                    tempStream << (uchar)(buffer[i]*255);
+                int c = pow(buffer[i],1.35)*180;
+//                if (c < 10)
+//                    qDebug() << c << c/200.;
+                if (c < 0)
+                    tempStream << uchar(0);
+                else if (c < 255)
+                    tempStream << uchar(c);
                 else
-                    tempStream << (uchar)(255);
+                    tempStream << uchar(255);
             }
         }
     }
@@ -103,8 +109,8 @@ bool Plot::openFile(QString filePath)
     qDebug() << tempFile.fileName();
     generator0 = new ImageGenerator(file, &tempFile, settings->colors(), this);
     generator1 = new ImageGenerator(file, &tempFile, settings->colors(), this);
-    generator0->setZoomFactor(imgZoom);
-    generator1->setZoomFactor(imgZoom);
+    generator0->setZoomFactorX(imgZoom);
+    generator1->setZoomFactorX(imgZoom);
     connect(generator0, SIGNAL(finished()), this, SLOT(imageGenerated()));
     connect(generator1, SIGNAL(finished()), this, SLOT(imageGenerated()));
 
@@ -182,7 +188,7 @@ void Plot::paintEvent(QPaintEvent *)
         offset = (i*grindVerticalSpace)+frameWidth;
         painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
         if (file != 0)
-            value.setNum((((offset-frameWidth+img_offset)*file->time()/maxFFToffset)/generator->zoomFactorX()),'f',3);
+            value.setNum((((offset-frameWidth+img_offset)*file->time()/maxFFToffset)/generator0->zoomFactorX()),'f',3);
         else
             value = "0.0";
         painter.drawText(offset,this->height()-AX_X_DESC_SPACE+frameWidth+15,value);
@@ -226,7 +232,9 @@ inline void Plot::generate(bool nr, int offset)
     //work only when generator exist (file reader) and is not busy
     if (generator0)
     {
-        generator->setZoomFactorY((double)this->plotHeight()/halfFFTBufferSize);
+        double zoomY = (double)this->plotHeight()/halfFFTBufferSize;
+        generator0->setZoomFactorY(zoomY);
+        generator1->setZoomFactorY(zoomY);
         if(!nr && !generator0->isRunning())
         {
             delete img0; img0 = 0; //deleting old img
