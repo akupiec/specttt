@@ -17,8 +17,6 @@ class Settings;
 #define AX_X_DESC_SPACE 30
 #define AX_Y_DESC_SPACE 60
 
-//klasa jest odpowiedzialna za koordynacje danych miêdzy wavefile a fft
-//jest to klasa odpowiedzialna za rysowanie wykresu*   ///// ja by to i tak wywali³ o osobnej ³atwiej bêdzie nawigowaæ danymi nie pogubimy sie co dlaczego i gdzie
 class Plot : public QWidget
 {
     Q_OBJECT
@@ -31,6 +29,13 @@ public:
     bool openFile(QString filePath);
     //Splitting Opened Wave File where splitters are markers
     void splitFile();
+    //refreshing plot, regenerating imges and setting display positon to begining of plot
+    void refreshPlot();
+
+    //curently using zoom factor
+    float zoom() {return imgZoom;}
+    //setting new zoom
+    void setZoom(float zoom){imgZoom = zoom;}
 
 signals:
     void MaximumOffset(int); // emit max width of plot
@@ -72,7 +77,7 @@ private:
     static const int grindVerticalSpace = 40;
     static const int grindHorizontalSpace = 20;
     static const int generateImgBuffor = 1000; // have to be calculated how much extra ram is needed for it (at 20000 is using extra ~280-380 Mb)
-    static const float imgZoom = 1.45;
+    float imgZoom;
 
     //moving
     int img_offset; // the same as FFT_offset

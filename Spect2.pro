@@ -30,10 +30,14 @@ HEADERS  += mainwindow.h \
     settings.h \
     xml.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    config.ui
 
 OTHER_FILES += \
     TODO
+
+
+
 
 
 

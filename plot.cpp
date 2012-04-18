@@ -18,7 +18,9 @@ Plot::Plot(QWidget *parent) :
     img_nr = 0;
     generator0 = 0;
     generator1 = 0;
+    //config
     settings = new Settings(SPECT_PROJECT_NAME);
+    imgZoom =1;
 }
 
 Plot::~Plot()
@@ -207,7 +209,7 @@ void Plot::paintEvent(QPaintEvent *)
     painter.end();
 }
 
-void Plot::resizeEvent(QResizeEvent *)
+void Plot::refreshPlot()
 {
     img_realWidth = this->width()-AX_Y_DESC_SPACE-frameWidth+generateImgBuffor;
     //after resize set evrithing to 0
@@ -219,6 +221,11 @@ void Plot::resizeEvent(QResizeEvent *)
     setMaxImgOffset();
     emit MaximumOffset(max_img_offset);
     emit ImgOffset(img_offset);
+}
+
+void Plot::resizeEvent(QResizeEvent *)
+{
+   refreshPlot();
 }
 
 inline void Plot::generate(bool nr, int offset)
