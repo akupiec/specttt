@@ -2,20 +2,15 @@
 #include <QPainter>
 #include "settings.h"
 
-Settings::Settings(QObject *parent) : QSettings(parent)
-{
-    init();
-}
-
-Settings::Settings(const QString &organization, const QString &application, QObject *parent)
-    : QSettings(organization, application, parent)
+Settings::Settings(const QString &fileName, Format format, QObject *parent)
+    : QSettings(fileName, format, parent)
 {
     init();
 }
 
 Settings::~Settings()
 {
-//    saveColors();
+    saveColors();
 }
 
 void Settings::init()
@@ -34,7 +29,6 @@ void Settings::setColors()
     QImage image(254,1,QImage::Format_RGB32);
     QPainter painter(&image);
     painter.fillRect(0,0,image.width(),image.height(),QBrush(gradient));
-//    image.save("gradient.bmp");
     for (int x=0; x<image.width(); x++)
         colorVector[x+1] = image.pixel(x,0);
     colorVector[255] = value("overflow","lime").value<QColor>().rgb();

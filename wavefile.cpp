@@ -1,10 +1,5 @@
 #include <QDebug>
-#include <QtXml/QDomDocument>
-#include <QtXml/QDomElement>
-#include <QFile>
-#include <QFileDialog>
 #include <QMessageBox>
-#include <QTextCodec>
 #include <cmath>
 #include "wavefile.h"
 
@@ -119,12 +114,6 @@ void WaveFile::detectBeeps(QVector<Markers> *markers, int channelId)
         qWarning("detectBeeps() : seek() failed");
         return;
     }
-    // xml document
-    QDomDocument xml ("xml");
-    xml.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\"");
-    QDomElement xmlRoot = xml.createElement("detected");
-    xml.appendChild(xmlRoot);
-    QDomElement xmlSignal; // if it's necessary you can add text node
     // detection variables
     const quint16 bufferSize = file.header.wave.sampleRate / 10;
     const qreal beepThreshold = 0.04;
@@ -154,38 +143,20 @@ void WaveFile::detectBeeps(QVector<Markers> *markers, int channelId)
         if (beepTakes && avgAmplitude < beepThreshold) { // end of signal
             beepTakes = false;
             qDebug() << "Beep starts on" << seconds << "seconds, stops on" << (double) i * bufferSize / file.header.wave.sampleRate << "seconds";
-            xmlSignal.setAttribute("endTime",QString::number((double) i * bufferSize / file.header.wave.sampleRate,'f',1));
-            xmlRoot.appendChild(xmlSignal);
             markers->append(Markers(beginBuffer*file.header.wave.blockAlign,i*bufferSize*file.header.wave.blockAlign,"Detected"));
         }
         else if (!beepTakes && avgAmplitude > beepThreshold) { // origin of signal
             beepTakes = true;
             beginBuffer = i*bufferSize;
             seconds = (double) i * bufferSize / file.header.wave.sampleRate;
-            xmlSignal = xml.createElement("signal");
-            xmlSignal.setAttribute("originTime",QString::number(seconds,'f',1));
         }
     }
     if (beepTakes)
     {
         qDebug() << "Beep starts on" << seconds << "seconds, stops on" << (double) buffersCount * bufferSize / file.header.wave.sampleRate << "seconds";
-        xmlSignal.setAttribute("endTime",QString::number((double) buffersCount * bufferSize / file.header.wave.sampleRate,'f',1));
-        xmlRoot.appendChild(xmlSignal);        
         markers->append(Markers(beginBuffer*file.header.wave.blockAlign,buffersCount*bufferSize*file.header.wave.blockAlign,"Detected"));
     }
-    qDebug() << xml.toString(4);
-    // saving xml file
-    QFile file(fileName().left(fileName().lastIndexOf('.')+1).append("xml"));
-    while (!file.open(QIODevice::WriteOnly))
-    {
-        QMessageBox::warning(0,tr("Permission needed"),tr("Choose path where you can write."),QMessageBox::Ok);
-        QString path = QFileDialog::getExistingDirectory(0, tr("Choose directory"),QDir::homePath());
-        if (path.isEmpty()) // when file dialog was canceled
-            return;
-        file.setFileName(path);
-    }
-    QTextStream stream (&file);
-    xml.save(stream,4,QDomNode::EncodingFromDocument);
+
 }
 
 bool WaveFile::splitFile(Markers *splitingMarker, bool overWrite)

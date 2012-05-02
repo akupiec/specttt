@@ -1,10 +1,6 @@
-#include <QDebug>
-#include <QDataStream>
-#include <QDir>
 #include "plot.h"
-#include "settings.h"
 
-#define SPECT_PROJECT_NAME "Spect2"
+#define SPECT_PROJECT_NAME "Spect2.ini"
 
 Plot::Plot(QWidget *parent) :
     QWidget(parent)
@@ -18,8 +14,7 @@ Plot::Plot(QWidget *parent) :
     img_nr = 0;
     generator0 = 0;
     generator1 = 0;
-    //config
-    settings = new Settings(SPECT_PROJECT_NAME);
+    //config   
     imgZoom =1;
 }
 
@@ -31,10 +26,14 @@ Plot::~Plot()
     delete generator0; generator0 = 0;
     delete generator1; generator1 = 0;
     delete settings; settings = 0;
+    delete xml;
 }
 
 void Plot::resetPlot()
 {
+    //saving markers
+    xml->saveMarkers(&markerList);
+
     //disconnecting old generator
     disconnect(generator0, SIGNAL(finished()), this, SLOT(imageGenerated()));
     disconnect(generator1, SIGNAL(finished()), this, SLOT(imageGenerated()));
@@ -45,7 +44,8 @@ void Plot::resetPlot()
     delete img1; img1 = 0;
     delete generator0; generator0 = 0;
     delete generator1; generator1 = 0;
-    delete settings; settings = new Settings(SPECT_PROJECT_NAME);
+    delete settings; settings = 0;
+    delete xml; xml =0;
 
     //resetting mouse confing
     img_offset = 0;
@@ -71,8 +71,12 @@ bool Plot::openFile(QString filePath)
         return false;
     QDataStream tempStream(&tempFile);
     tempStream.setVersion(12);
+
     //wave file
     file = new WaveFile(filePath);
+    xml = new Xml(file->fileName());
+    settings = new Settings(QString(SPECT_PROJECT_NAME),QSettings::IniFormat,this);
+
     quint16 halfFFTBufferSize = fft.bufferSize() / 2;
     maxFFToffset = 2 * (int(double(file->samples()) / halfFFTBufferSize + 1.) - 1);
     quint16 tempFileHeight = 0;

@@ -7,10 +7,14 @@
 #include <QTemporaryFile>
 #include <QPainter>
 #include <QMouseEvent>
+#include <QDir>
+
 #include "wavefile.h"
 #include "fft.h"
 #include "markers.h"
 #include "imagegenerator.h"
+#include "settings.h"
+#include "xml.h"
 
 class Settings;
 
@@ -70,6 +74,7 @@ private:
     inline void generate(bool img_nr = 0, int offset = 0); //using ImageGenerator for new img
     inline void moveGenerate(); //calling porper generate function based on current img_offset
     bool img_nr; //displeing img0 or img1
+    float imgZoom; //X axes scaling
     int last_generated_offset; //for protection double generation same img
 
     //config
@@ -77,7 +82,6 @@ private:
     static const int grindVerticalSpace = 40;
     static const int grindHorizontalSpace = 20;
     static const int generateImgBuffor = 1000; // have to be calculated how much extra ram is needed for it (at 20000 is using extra ~280-380 Mb)
-    float imgZoom;
 
     //moving
     int img_offset; // the same as FFT_offset
@@ -100,6 +104,7 @@ public:
     QVector<Markers> markerList; // markers list object
     QTemporaryFile tempFile; // plot data temporary file
     Settings *settings; // plot settings object
+    Xml *xml;
 };
 
 #endif // PLOT_H
