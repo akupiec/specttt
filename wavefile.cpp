@@ -12,7 +12,8 @@ WaveFile::WaveFile(const QString &name) : QFile(name)
 {
     if(!open(QIODevice::ReadOnly))
         qDebug() << "error - WaveFile(QString) open file error";
-    readHeader();
+    int result = readHeader();
+    if (result <= 0) qDebug() << "error - WaveFile(QString) readHeader error";
 }
 
 WaveFile::~WaveFile()
@@ -50,8 +51,13 @@ qint64 WaveFile::readHeader()
             else
             {
                 qDebug() << "error- readHeader:: unsupported format or file demaged";
-                result = -2; // unsuportet format so return false
+                return result = -2; // unsuportet format so return false
             }
+        }
+        else
+        {
+            qDebug() << "error- readHeader:: reading file error";
+            return result; // reading error
         }
     }
     else //current position is not the start of the header

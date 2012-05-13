@@ -77,6 +77,8 @@ bool Plot::openFile(QString filePath)
     int tempFileWidth = 0;
     if (QFile::exists(tempFilePath) && tempFile.size() > halfFFTBufferSize)
         tempStream >> tempFileHeight >> tempFileWidth;
+    else
+        qDebug() << "Plot::openFile -- temp file read error or file not exists";
     if (halfFFTBufferSize != tempFileHeight && maxFFToffset != tempFileWidth)
     {
         if (!tempFile.remove())
@@ -99,8 +101,9 @@ bool Plot::openFile(QString filePath)
             }
         }
     }
+    else
+        qDebug() << "Plot::openFile -- temp file error:" << tempFile.fileName();
     tempFile.close();
-    qDebug() << tempFile.fileName();
     generator0 = new ImageGenerator(file, &tempFile, settings->colors(), this);
     generator1 = new ImageGenerator(file, &tempFile, settings->colors(), this);
     generator0->setZoomFactor(imgZoom);
