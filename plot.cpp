@@ -227,19 +227,18 @@ inline void Plot::generate(bool nr, int offset)
     //work only when generator exist (file reader) and is not busy
     if (generator0 && generator1)
     {
-        if(!nr && !generator0->isRunning())
+        if(!nr && !generator0->isRunning() && !generator1->isRunning())
         {
             delete img0; img0 = 0; //deleting old img
             img0 = generator0->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom); // generating new one
             last_generated_offset = offset;
         }
-        else if(!generator1->isRunning())
+        else if(!generator1->isRunning() && !generator0->isRunning())
         {
             delete img1; img1 =0;
             img1 = generator1->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom);
             last_generated_offset = offset;
         }
-
     }
 }
 
