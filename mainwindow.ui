@@ -235,8 +235,17 @@
     <property name="title">
      <string>File</string>
     </property>
+    <widget class="QMenu" name="menuMarkers">
+     <property name="title">
+      <string>Markers</string>
+     </property>
+     <addaction name="actionMark_detect"/>
+     <addaction name="separator"/>
+     <addaction name="actionMark_save"/>
+     <addaction name="actionMark_load"/>
+    </widget>
     <addaction name="actionImageGenerator"/>
-    <addaction name="actionBeep_detect"/>
+    <addaction name="menuMarkers"/>
     <addaction name="actionSplit"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
@@ -267,14 +276,6 @@
     <string>Ctrl+G</string>
    </property>
   </action>
-  <action name="actionBeep_detect">
-   <property name="text">
-    <string>Beep detect</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+D</string>
-   </property>
-  </action>
   <action name="actionSplit">
    <property name="text">
     <string>Split</string>
@@ -291,6 +292,21 @@
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionMark_detect">
+   <property name="text">
+    <string>Detect</string>
+   </property>
+  </action>
+  <action name="actionMark_save">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionMark_load">
+   <property name="text">
+    <string>Load</string>
    </property>
   </action>
  </widget>

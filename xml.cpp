@@ -38,3 +38,21 @@ void Xml::saveMarkers(QVector<Markers> *markers)
     xml.save(stream,4,QDomNode::EncodingFromDocument);
     file.close();
 }
+
+void Xml::loadMarkers(QVector<Markers> *markers)
+{
+    QDomDocument xml("xml");
+    QFile file(fileName.append(".xml"));
+    if (!file.open(QIODevice::ReadOnly))
+        return;
+    if (!xml.setContent(&file)) {
+        file.close();
+        return;
+    }
+    file.close();
+
+    // print out the element names of all elements that are direct children
+    // of the outermost element.
+    QDomElement docElem = xml.documentElement();
+    qDebug() << xml.toString(4);
+}

@@ -17,15 +17,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->plot,SIGNAL(ImgOffset(int)),ui->horizontalScrollBar,SLOT(setValue(int)));
     connect(ui->plot,SIGNAL(MaximumOffset(int)),this,SLOT(setScrollBarMaximumValue(int)));
 
-    // ImageGenerator test
-    connect(ui->actionBeep_detect, SIGNAL(triggered()), ui->plot, SLOT(detectBeeps()));
-
-    //table filling
-    ui->tableWidget->setRowCount(2);
-    QTableWidgetItem *item = new QTableWidgetItem("AGFaawddddddddddddddddddddddddddwdawdawdawdawdawdawdadadawdAdw");
-    ui->tableWidget->setItem(0,0,item);
-    ui->tableWidget->setRowCount(3);
-
     //splitter default size
     QList<int> size;
     size.append(10);
@@ -90,4 +81,48 @@ void MainWindow::on_buttonRefreshPlot_clicked()
     }
     else //refreshing all parametrs and images
         ui->plot->refreshPlot();
+}
+
+void MainWindow::on_actionMark_detect_triggered()
+{
+    if(!ui->plot->isOpened())
+        qDebug() << "MainWindow::on_actionMark_detect_triggered() -- read file first";
+
+    //detecting Beeps
+    ui->plot->detectBeeps();
+
+    //table filling
+    for(int i=0; i<ui->plot->markerList.count();i++)
+    {
+        ui->tableWidget->setRowCount(i+1);
+        QTableWidgetItem *label = new QTableWidgetItem(ui->plot->markerList[i].label());
+        ui->tableWidget->setItem(i,0,label);
+    }
+    ui->tableWidget->update();
+    allowEditingCells = true;
+}
+
+void MainWindow::on_tableWidget_cellChanged(int row, int column)
+{
+    if(allowEditingCells && column == 0)
+        ui->plot->markerList[row].setLabel(ui->tableWidget->item(row,column)->text());
+}
+
+void MainWindow::on_buttonMarkerAdd_clicked()
+{
+    for(int i=0; i<ui->plot->markerList.count();i++)
+        qDebug() << ui->plot->markerList[i].label() << ui->plot->markerList[i].note();
+}
+
+void MainWindow::on_tableWidget_itemSelectionChanged()
+{
+    ui->textEdit->setPlainText(ui->plot->markerList[ui->tableWidget->currentRow()].note());
+}
+
+void MainWindow::on_textEdit_textChanged()
+{
+    if(ui->tableWidget->currentRow() != -1)
+    {
+        ui->plot->markerList[ui->tableWidget->currentRow()].setNote(ui->textEdit->toPlainText());
+    }
 }

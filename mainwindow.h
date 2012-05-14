@@ -33,6 +33,16 @@ private slots:
 
     void on_buttonRefreshPlot_clicked();
 
+    void on_actionMark_detect_triggered();
+
+    void on_tableWidget_cellChanged(int row, int column);
+
+    void on_buttonMarkerAdd_clicked();
+
+    void on_tableWidget_itemSelectionChanged();
+
+    void on_textEdit_textChanged();
+
 private:
     //ui parametrs
     Ui::MainWindow *ui;
@@ -41,6 +51,8 @@ private:
 
     //file
     QString filePath;
+
+    bool allowEditingCells;
 };
 
 #endif // MAINWINDOW_H

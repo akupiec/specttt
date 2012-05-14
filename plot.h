@@ -31,6 +31,8 @@ public:
 
     //Reading File / creating WaveFile object
     bool openFile(QString filePath);
+    //Retruning true if any file was readed
+    bool isOpened(){if(file != 0) return true; else return false;}
     //Splitting Opened Wave File where splitters are markers
     void splitFile();
     //refreshing plot, regenerating imges and setting display positon to begining of plot
@@ -41,6 +43,9 @@ public:
     //setting new zoom
     void setZoom(float zoom){imgZoom = zoom;}
 
+    //auto detect all beeps in wave file
+    void detectBeeps(int channelId = 0);
+
 signals:
     void MaximumOffset(int); // emit max width of plot
     void ImgOffset(int); // emit curent position
@@ -48,8 +53,6 @@ signals:
 private slots:
     void setImgOffset(int); // connected to horizontal scroll bar for setting imr_offset
     void imageGenerated(); // finished generation of new img
-    //auto detect all beeps in wave file
-    void detectBeeps(int channelId = 0);
 
 private:
     //Resetting all setting, should be called before opening new file
