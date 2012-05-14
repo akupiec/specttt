@@ -34,8 +34,6 @@ private:
     int fftSamples; // FFT samples number witch this generator should plot
     QPair<int,int> fftRange; // first and last FFT sample number
     QImage *img; // working image
-//    QQueue <ImageData> workQueue;
-    CyclicQueue <ImageData> workQueue;
     QVector<QRgb> *colors;
 };
 

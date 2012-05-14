@@ -133,14 +133,13 @@ void Plot::paintEvent(QPaintEvent *)
     painter.drawRect(0,0,this->width(),this->height());
 
     //painting image
-    if(generator0)
+    if(generator0 && generator1)
     {
         if (!img_nr) //img0
         {
-            if (img0)
+            if (img0 && generator0->isFinished())
             {
                 // if generator is working here will couse carash
-                if(generator0->isFinished())
                 painter.drawImage(frameWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img0);
                 if(img1 && generator1->isFinished())
                     painter.drawImage(frameWidth+img0->width()-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img1->height(),*img1);
@@ -148,9 +147,8 @@ void Plot::paintEvent(QPaintEvent *)
         }
         else // img1
         {
-            if(img1)
+            if(img1 && generator1->isFinished())
             {
-                if(generator1->isFinished())
                 painter.drawImage(frameWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img1->height(),*img1);
                 if(img0 && generator0->isFinished())
                     painter.drawImage(frameWidth+img1->width()-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img0);
@@ -227,7 +225,7 @@ void Plot::resizeEvent(QResizeEvent *)
 inline void Plot::generate(bool nr, int offset)
 {
     //work only when generator exist (file reader) and is not busy
-    if (generator0)
+    if (generator0 && generator1)
     {
         if(!nr && !generator0->isRunning())
         {
@@ -237,7 +235,7 @@ inline void Plot::generate(bool nr, int offset)
         }
         else if(!generator1->isRunning())
         {
-            delete img1;
+            delete img1; img1 =0;
             img1 = generator1->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom);
             last_generated_offset = offset;
         }
