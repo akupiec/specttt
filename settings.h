@@ -14,6 +14,7 @@ public:
     ~Settings();
     void setColors();
     void saveColors();
+    void saveColors(const QVector<QRgb> &baseColors); // baseColors is vector array containing only 4 important colors
     QVector<QRgb> *colors() { return &colorVector; }
 
 private:

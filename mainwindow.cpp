@@ -3,6 +3,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "plot.h"
+#include "colorsdialog.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -33,4 +34,10 @@ void MainWindow::setScrollBarMaximumValue(int value)
 {
     ui->horizontalScrollBar->setMinimum(0);
     ui->horizontalScrollBar->setMaximum(value);
+}
+
+void MainWindow::on_actionColors_triggered()
+{
+    ColorsDialog *dialog = new ColorsDialog(ui->plot->settings,this);
+    dialog->show();
 }

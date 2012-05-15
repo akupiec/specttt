@@ -23,6 +23,8 @@ private slots:
     void on_actionImageGenerator_triggered();
     void setScrollBarMaximumValue(int);
 
+    void on_actionColors_triggered();
+
 private:
     Ui::MainWindow *ui;
 };

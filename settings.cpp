@@ -15,7 +15,7 @@ Settings::Settings(const QString &organization, const QString &application, QObj
 
 Settings::~Settings()
 {
-//    saveColors();
+    saveColors();
 }
 
 void Settings::init()
@@ -31,7 +31,7 @@ void Settings::setColors()
     QLinearGradient gradient(0,0,253,0);
     gradient.setColorAt(0.0, value("start","coral").value<QColor>());
     gradient.setColorAt(1.0, value("stop","moccasin").value<QColor>());
-    QImage image(254,1,QImage::Format_RGB32);
+    QImage image(254,1,QImage::Format_ARGB32);
     QPainter painter(&image);
     painter.fillRect(0,0,image.width(),image.height(),QBrush(gradient));
 //    image.save("gradient.bmp");
@@ -48,5 +48,15 @@ void Settings::saveColors()
     setValue("start", QColor(colorVector[1]).name());
     setValue("stop", QColor(colorVector[254]).name());
     setValue("overflow", QColor(colorVector[255]).name());
+    endGroup();
+}
+
+void Settings::saveColors(const QVector<QRgb> &colors)
+{
+    beginGroup("Colors");
+    setValue("null", QColor(colors[0]).name());
+    setValue("start", QColor(colors[1]).name());
+    setValue("stop", QColor(colors[2]).name());
+    setValue("overflow", QColor(colors[3]).name());
     endGroup();
 }

@@ -17,7 +17,8 @@ SOURCES += main.cpp\
     plot.cpp \
     markers.cpp \
     imagegenerator.cpp \
-    settings.cpp
+    settings.cpp \
+    colorsdialog.cpp
 
 HEADERS  += mainwindow.h \
     wavefile.h \
@@ -26,9 +27,11 @@ HEADERS  += mainwindow.h \
     markers.h \
     imagegenerator.h \
     cyclicqueue.h \
-    settings.h
+    settings.h \
+    colorsdialog.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    colorsdialog.ui
 
 OTHER_FILES += \
     TODO
