@@ -71,28 +71,31 @@ bool Plot::openFile(QString filePath)
     tempStream.setVersion(12);
     //wave file
     file = new WaveFile(filePath);
-    quint16 halfFFTBufferSize = fft.bufferSize() / (2*DENSE);
-    maxFFToffset = 2 * file->samples()/(double)halfFFTBufferSize -  1;
+    halfFFTBufferSize = fft.bufferSize() / 2; //quint half of buffer fft
+    quint16 FFTBufferGraduation = halfFFTBufferSize / DENSE; // lenght of graduation depended of densing degree
+    maxFFToffset = 2 * (int(double(file->samples()) / FFTBufferGraduation + 1.) - 1); //amout of fft samples in file
     quint16 tempFileHeight = 0;
     int tempFileWidth = 0;
     if (QFile::exists(tempFilePath) && tempFile.size() > halfFFTBufferSize)
-        tempStream >> tempFileHeight >> tempFileWidth;
+        tempStream >> tempFileHeight >> tempFileWidth; //reading header form file
     else
         qDebug() << "Plot::openFile -- temp file read error or file not exists";
-    if (halfFFTBufferSize != tempFileHeight && maxFFToffset != tempFileWidth)
+    if (halfFFTBufferSize != tempFileHeight || maxFFToffset != tempFileWidth) // checking if temp file need to be regenerated
     {
-        if (!tempFile.remove())
+        qDebug() << "Plot::openFile -- generating new FFT this may take a while, please wait...";
+        if (!tempFile.remove()) //removing old temp file
             return false;
         tempFile.setFileName(tempFilePath);
-        if (!tempFile.open() || !tempFile.seek(0))
+        if (!tempFile.open() || !tempFile.seek(0)) //creating new one
             return false;
         tempStream.setDevice(&tempFile);
-        tempStream << halfFFTBufferSize << maxFFToffset; // temp file header
-        for (int i=0; i<maxFFToffset; i++) {
-            file->readData(buffer,fft.bufferSize(),i*halfFFTBufferSize,0);
+        tempStream << halfFFTBufferSize << maxFFToffset; // saving new header to temp file
+        for (int i=0; i<maxFFToffset; i++) //lenght of file loop
+        {
+            file->readData(buffer,fft.bufferSize(),i*FFTBufferGraduation,0);
             fft.makeWindow(buffer);
             fft.countFFT(buffer);
-            for (qint16 i=0; i<halfFFTBufferSize; i++)
+            for (qint16 i=0; i<halfFFTBufferSize; i++) // height of file loop (height of one FFT column)
             {
                 if (buffer[i] < 1.0 && buffer[i] >= 0.0)
                     tempStream << (uchar)(buffer[i]*255);
@@ -102,12 +105,12 @@ bool Plot::openFile(QString filePath)
         }
     }
     else
-        qDebug() << "Plot::openFile -- temp file error:" << tempFile.fileName();
+        qDebug() << "Plot::openFile -- reading from temp file" << tempFile.fileName();
     tempFile.close();
     generator0 = new ImageGenerator(file, &tempFile, settings->colors(), this);
     generator1 = new ImageGenerator(file, &tempFile, settings->colors(), this);
-    generator0->setZoomFactor(imgZoom);
-    generator1->setZoomFactor(imgZoom);
+    generator0->setZoomFactorX(imgZoom);
+    generator1->setZoomFactorX(imgZoom);
     connect(generator0, SIGNAL(finished()), this, SLOT(imageGenerated()));
     connect(generator1, SIGNAL(finished()), this, SLOT(imageGenerated()));
 
@@ -183,7 +186,7 @@ void Plot::paintEvent(QPaintEvent *)
         offset = (i*grindVerticalSpace)+frameWidth;
         painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
         if (file != 0)
-            value.setNum((((offset-frameWidth+img_offset)*file->time()/maxFFToffset)/generator0->zoomFactor()),'f',3);
+            value.setNum((((offset-frameWidth+img_offset)*file->time()/maxFFToffset)/generator0->zoomFactorX()),'f',3);
         else
             value = "0.0";
         painter.drawText(offset,this->height()-AX_X_DESC_SPACE+frameWidth+15,value);
@@ -227,6 +230,9 @@ inline void Plot::generate(bool nr, int offset)
     //work only when generator exist (file reader) and is not busy
     if (generator0 && generator1)
     {
+        double zoomY = (double)this->plotHeight()/halfFFTBufferSize;
+        generator0->setZoomFactorY(zoomY);
+        generator1->setZoomFactorY(zoomY);
         if(!nr && !generator0->isRunning() && !generator1->isRunning())
         {
             delete img0; img0 = 0; //deleting old img
@@ -390,4 +396,14 @@ void Plot::splitFile()
 {
     for(int i =0; i< markerList.count(); i++)
         file->splitFile(&markerList[i]);
+}
+
+int Plot::plotWidth()
+{
+    return this->width() - AX_Y_DESC_SPACE - 2*frameWidth;
+}
+
+int Plot::plotHeight()
+{
+    return this->height() - AX_X_DESC_SPACE - 2*frameWidth;
 }

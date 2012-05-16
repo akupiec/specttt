@@ -16,8 +16,10 @@ class ImageGenerator : public QThread
 public:
     ImageGenerator(WaveFile *file, QTemporaryFile *fftData, QVector<QRgb> *colors, QObject *parent = 0);
     QImage *plotImage(int startFFT, int stopFFT);
-    double zoomFactor() const { return zoomFactor_; }
-    void setZoomFactor(double zoom) { zoomFactor_ = zoom; }
+    double zoomFactorX() const { return zoomFactor_X; }
+    void setZoomFactorX(double zoom) { zoomFactor_X = zoom; }
+    double zoomFactorY() const { return zoomFactor_Y; }
+    void setZoomFactorY(double zoom) { zoomFactor_Y = zoom; }
 
 protected:
     void run();
@@ -27,7 +29,8 @@ signals:
 private:
     WaveFile *file; // wave file object - needed for FFT counting
     QTemporaryFile *fftData; // temp file containing FFT data
-    double zoomFactor_; // zoom factor - 1.0 when should show eatch column from fftData
+    double zoomFactor_X; // zoom factor - 1.0 when should show eatch column from fftData
+    double zoomFactor_Y;
     quint16 height; // half FFT buffer size
     int width; // FFT samples number
     static const int fftDataHeaderSize = sizeof(height) + sizeof(width); // temp file header size in bytes

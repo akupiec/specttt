@@ -24,8 +24,6 @@ void ImageGenerator::run()
     img = img;
     if (!img || img->isNull())
         return;
-    fftRange = fftRange;
-    fftSamples = fftSamples;
     fftData->seek(fftDataHeaderSize + height * fftRange.first);
     char data;
     int uData;
@@ -41,9 +39,7 @@ void ImageGenerator::run()
                 img->setPixel(x,y,colors->at(uData)); // set pixel color
         }
     }
-    *img = img->scaled(zoomFactor_*img->width(), zoomFactor_*img->height(),
-                       Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    //qDebug() << "Time:" << time.elapsed() << fftRange.first << img->width() << fftSamples;
+   *img = img->scaled(zoomFactor_X*img->width(), zoomFactor_Y*img->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 
 }
 
