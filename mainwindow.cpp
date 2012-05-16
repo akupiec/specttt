@@ -10,6 +10,9 @@ MainWindow::MainWindow(QWidget *parent) :
     uiConfig.setupUi(&config);
     connect(uiConfig.buttonBox,SIGNAL(clicked(QAbstractButton*)),this,SLOT(on_config_buttonBox_clicked(QAbstractButton*)));
 
+    // Table of markers
+    ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+
     // Horizontal ScrollBar config
     ui->horizontalScrollBar->setMinimum(0);
     ui->horizontalScrollBar->setMaximum(0);
@@ -103,7 +106,7 @@ void MainWindow::on_actionMark_detect_triggered()
 }
 
 void MainWindow::on_tableWidget_cellChanged(int row, int column)
-{
+{    
     if(allowEditingCells && column == 0)
         ui->plot->markerList[row].setLabel(ui->tableWidget->item(row,column)->text());
 }
@@ -116,7 +119,9 @@ void MainWindow::on_buttonMarkerAdd_clicked()
 
 void MainWindow::on_tableWidget_itemSelectionChanged()
 {
+    //qDebug() << "item selection changed: " << ui->tableWidget->currentRow() << ui->tableWidget->selectedItems().first()->row();
     ui->textEdit->setPlainText(ui->plot->markerList[ui->tableWidget->currentRow()].note());
+    ui->plot->selectMarker(ui->tableWidget->currentRow()); // selecting proper marker
 }
 
 void MainWindow::on_textEdit_textChanged()

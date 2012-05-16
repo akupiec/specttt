@@ -46,6 +46,9 @@ public:
     //auto detect all beeps in wave file
     void detectBeeps(int channelId = 0);
 
+    //setting marker of given index
+    void selectMarker(int index){if (index != markerSelected) markerSelected = index; else markerSelected =-1; this->update();}
+
 signals:
     void MaximumOffset(int); // emit max width of plot
     void ImgOffset(int); // emit curent position
@@ -70,6 +73,7 @@ private:
     QImage *img0;
     QImage *img1;
     int img_realWidth; //width of img without rounding error
+    int markerSelected; //selected markers index ( -1 when notching is selected)
 
     //generating
     ImageGenerator *generator0; //pointer to thread class

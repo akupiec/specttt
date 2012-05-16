@@ -9,6 +9,7 @@ Plot::Plot(QWidget *parent) :
     img_offset = 0;
     draggingEnabled =0; // disable moving plot
     markerIndexdragging = -1; //disable dragging markers
+    markerSelected = -1;
     img0 = 0;
     img1 = 0;
     img_nr = 0;
@@ -54,6 +55,7 @@ void Plot::resetPlot()
 
     //resetting markers
     markerList.clear();
+    markerSelected = -1;
 }
 
 bool Plot::openFile(QString filePath)
@@ -161,11 +163,16 @@ void Plot::paintEvent(QPaintEvent *)
         }
     }
 
-    //markres
+    //markres    
     painter.setPen(QPen(QBrush(Qt::NoBrush),0));
     painter.setBrush(QColor(0,0,255,100));
     for(int i=0; i<markerList.count();i++)
-        painter.drawRect(frameWidth+offsetFileToOffsetFFT(markerList[i].beginOffset())-img_offset,0,offsetFileToOffsetFFT(markerList[i].endOffset()-markerList[i].beginOffset()),this->height()-AX_X_DESC_SPACE);
+        if (i != markerSelected) painter.drawRect(frameWidth+offsetFileToOffsetFFT(markerList[i].beginOffset())-img_offset,0,offsetFileToOffsetFFT(markerList[i].endOffset()-markerList[i].beginOffset()),this->height()-AX_X_DESC_SPACE);
+    if (markerSelected != -1 && markerSelected <markerList.count())
+    {
+        painter.setBrush(QColor(0,255,0,100));
+        painter.drawRect(frameWidth+offsetFileToOffsetFFT(markerList[markerSelected].beginOffset())-img_offset,0,offsetFileToOffsetFFT(markerList[markerSelected].endOffset()-markerList[markerSelected].beginOffset()),this->height()-AX_X_DESC_SPACE);
+    }
 
     //axis background
     painter.setBrush(Qt::black);
