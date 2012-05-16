@@ -12,6 +12,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Table of markers
     ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
+    connect(ui->buttonMarkerAdd,SIGNAL(clicked()),ui->plot,SLOT(addMarker()));
+    connect(ui->plot,SIGNAL(MarkerListUpdate(int)),this,SLOT(tableWidget_update(int)));
 
     // Horizontal ScrollBar config
     ui->horizontalScrollBar->setMinimum(0);
@@ -78,8 +81,6 @@ void MainWindow::on_buttonRefreshPlot_clicked()
     if(static_cast<int>(ui->zoomSpinBox->value()) != static_cast<int>(ui->plot->zoom()*100)) //reopening file and all configurations
     {
         ui->plot->setZoom(ui->zoomSpinBox->value()/100);
-        if(filePath != "")
-            ui->plot->openFile(filePath);
         qDebug() <<"regenerated";
     }
     else //refreshing all parametrs and images
@@ -97,24 +98,18 @@ void MainWindow::on_actionMark_detect_triggered()
     //table filling
     for(int i=0; i<ui->plot->markerList.count();i++)
     {
-        ui->tableWidget->setRowCount(i+1);
-        QTableWidgetItem *label = new QTableWidgetItem(ui->plot->markerList[i].label());
-        ui->tableWidget->setItem(i,0,label);
+        ui->tableWidget->setRowCount(i+1); // adding new row
+        QTableWidgetItem *item = new QTableWidgetItem(ui->plot->markerList[i].label()); // making new item for table
+        ui->tableWidget->setItem(i,0,item); // adding item to table
     }
-    ui->tableWidget->update();
-    allowEditingCells = true;
+    ui->tableWidget->update(); // update table
+    allowEditingCells = true; // ? it was needed for some reason
 }
 
 void MainWindow::on_tableWidget_cellChanged(int row, int column)
 {    
     if(allowEditingCells && column == 0)
         ui->plot->markerList[row].setLabel(ui->tableWidget->item(row,column)->text());
-}
-
-void MainWindow::on_buttonMarkerAdd_clicked()
-{
-    for(int i=0; i<ui->plot->markerList.count();i++)
-        qDebug() << ui->plot->markerList[i].label() << ui->plot->markerList[i].note();
 }
 
 void MainWindow::on_tableWidget_itemSelectionChanged()
@@ -130,4 +125,32 @@ void MainWindow::on_textEdit_textChanged()
     {
         ui->plot->markerList[ui->tableWidget->currentRow()].setNote(ui->textEdit->toPlainText());
     }
+}
+
+void MainWindow::tableWidget_update(int index)
+{
+    ui->tableWidget->clearSelection(); // clearing selection
+    if(index != -1 )
+    {
+        ui->tableWidget->insertRow(index); // inserting new row in index position (end of table)
+        QTableWidgetItem *item = new QTableWidgetItem(ui->plot->markerList[index].label()); // new item
+        ui->tableWidget->setItem(index,0,item); // adding item
+        ui->tableWidget->activateWindow(); // setting table active
+        ui->tableWidget->selectRow(index); // selecting new row
+    }
+    ui->tableWidget->update(); // uptade table
+}
+
+void MainWindow::on_buttonMarkerDelete_clicked()
+{
+    allowEditingCells = true; // ? it was needed for some reason
+    int index = ui->tableWidget->currentRow(); // taking index of curent selected row
+    ui->tableWidget->clearSelection(); // clearing sellection (nessesery for removing row)
+    QTableWidgetItem *item = ui->tableWidget->item(ui->tableWidget->currentRow(),0); // taking pointer of item to delete it
+    delete item;
+    if (ui->tableWidget->rowCount() > 1) // if ther is more then one maker
+        ui->tableWidget->removeRow(index); // delete specyfic row
+    else ui->tableWidget->setRowCount(0); // set row number to 0
+    ui->plot->delMarker(index); // deleting selected row form Marker List Vector
+    ui->plot->selectMarker(ui->tableWidget->currentRow()); // selecting next marker and refreshing plot
 }

@@ -22,7 +22,6 @@ void Xml::saveMarkers(QVector<Markers> *markers)
         xmlSignal.setAttribute("note",Markers(markers->at(i)).note());
         xmlRoot.appendChild(xmlSignal);
     }
-    qDebug() << xml.toString(4);
 
     // saving xml file
     QFile file(fileName.append(".xml"));
@@ -37,6 +36,7 @@ void Xml::saveMarkers(QVector<Markers> *markers)
     QTextStream stream (&file);
     xml.save(stream,4,QDomNode::EncodingFromDocument);
     file.close();
+    qDebug() << "Xml::saveMarkers -- markers saved";
 }
 
 void Xml::loadMarkers(QVector<Markers> *markers)
@@ -54,5 +54,5 @@ void Xml::loadMarkers(QVector<Markers> *markers)
     // print out the element names of all elements that are direct children
     // of the outermost element.
     QDomElement docElem = xml.documentElement();
-    qDebug() << xml.toString(4);
+    qDebug() << "Xml::loadMarkers -- markers loaded";
 }

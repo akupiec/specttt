@@ -41,21 +41,24 @@ public:
     //curently using zoom factor
     float zoom() {return imgZoom;}
     //setting new zoom
-    void setZoom(float zoom){imgZoom = zoom;}
+    void setZoom(float zoom);
 
     //auto detect all beeps in wave file
     void detectBeeps(int channelId = 0);
 
     //setting marker of given index
-    void selectMarker(int index){if (index != markerSelected) markerSelected = index; else markerSelected =-1; this->update();}
+    void selectMarker(int index){if (index < markerList.count()) markerIndexdragging = index; else markerIndexdragging = -1; this->update();}
+    void delMarker(int index); // deleting specyfic marker
 
 signals:
     void MaximumOffset(int); // emit max width of plot
     void ImgOffset(int); // emit curent position
+    void MarkerListUpdate(int); //emit curently selected index and refreshing ui table of markers
 
 private slots:
     void setImgOffset(int); // connected to horizontal scroll bar for setting imr_offset
     void imageGenerated(); // finished generation of new img
+    void addMarker(); // adding new marker to plot
 
 private:
     //Resetting all setting, should be called before opening new file
@@ -72,8 +75,7 @@ private:
     // img plotis in memory
     QImage *img0;
     QImage *img1;
-    int img_realWidth; //width of img without rounding error
-    int markerSelected; //selected markers index ( -1 when notching is selected)
+    int img_realWidth; //width of img without rounding error    
 
     //generating
     ImageGenerator *generator0; //pointer to thread class
@@ -98,7 +100,7 @@ private:
                               if (max_img_offset < 0) max_img_offset =0;}
     int max_img_offset; // and of imgae in pixels
     bool draggingEnabled; // true when mose left button is pressed
-    int markerIndexdragging; // id curently dragging marker, -1 when dragging is disable
+    int markerIndexdragging; // id curently dragging or selected marker, -1 when dragging is disable
     int markerEdgedragging; //-1 when dragging whole marker, 0 when dragging left edge, 1 for right edge
     virtual void mousePressEvent(QMouseEvent *);
     virtual void mouseReleaseEvent(QMouseEvent *);

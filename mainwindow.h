@@ -22,6 +22,7 @@ public:
     ~MainWindow();
 
 private slots:
+    void tableWidget_update(int); // updating table of markers
     void on_actionImageGenerator_triggered();
     void setScrollBarMaximumValue(int);
 
@@ -37,11 +38,11 @@ private slots:
 
     void on_tableWidget_cellChanged(int row, int column);
 
-    void on_buttonMarkerAdd_clicked();
-
     void on_tableWidget_itemSelectionChanged();
 
     void on_textEdit_textChanged();
+
+    void on_buttonMarkerDelete_clicked();
 
 private:
     //ui parametrs

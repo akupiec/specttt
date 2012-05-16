@@ -9,7 +9,6 @@ Plot::Plot(QWidget *parent) :
     img_offset = 0;
     draggingEnabled =0; // disable moving plot
     markerIndexdragging = -1; //disable dragging markers
-    markerSelected = -1;
     img0 = 0;
     img1 = 0;
     img_nr = 0;
@@ -55,7 +54,7 @@ void Plot::resetPlot()
 
     //resetting markers
     markerList.clear();
-    markerSelected = -1;
+    markerIndexdragging = -1;
 }
 
 bool Plot::openFile(QString filePath)
@@ -167,11 +166,11 @@ void Plot::paintEvent(QPaintEvent *)
     painter.setPen(QPen(QBrush(Qt::NoBrush),0));
     painter.setBrush(QColor(0,0,255,100));
     for(int i=0; i<markerList.count();i++)
-        if (i != markerSelected) painter.drawRect(frameWidth+offsetFileToOffsetFFT(markerList[i].beginOffset())-img_offset,0,offsetFileToOffsetFFT(markerList[i].endOffset()-markerList[i].beginOffset()),this->height()-AX_X_DESC_SPACE);
-    if (markerSelected != -1 && markerSelected <markerList.count())
+        if (i != markerIndexdragging) painter.drawRect(frameWidth+offsetFileToOffsetFFT(markerList[i].beginOffset())-img_offset,0,offsetFileToOffsetFFT(markerList[i].endOffset()-markerList[i].beginOffset()),this->height()-AX_X_DESC_SPACE);
+    if (markerIndexdragging != -1 && markerIndexdragging <markerList.count())
     {
         painter.setBrush(QColor(0,255,0,100));
-        painter.drawRect(frameWidth+offsetFileToOffsetFFT(markerList[markerSelected].beginOffset())-img_offset,0,offsetFileToOffsetFFT(markerList[markerSelected].endOffset()-markerList[markerSelected].beginOffset()),this->height()-AX_X_DESC_SPACE);
+        painter.drawRect(frameWidth+offsetFileToOffsetFFT(markerList[markerIndexdragging].beginOffset())-img_offset,0,offsetFileToOffsetFFT(markerList[markerIndexdragging].endOffset()-markerList[markerIndexdragging].beginOffset()),this->height()-AX_X_DESC_SPACE);
     }
 
     //axis background
@@ -267,27 +266,24 @@ void Plot::mousePressEvent(QMouseEvent *e)
         draggingEnabled = true;
     if (e->button() == Qt::RightButton) // editing markers
     {
-        for(int i=0; i<markerList.count(); i++)
+        if (markerIndexdragging != -1 && markerIndexdragging < markerList.count())
         {
-            int begin = offsetFileToOffsetFFT(markerList[i].beginOffset())-img_offset;
-            int end = offsetFileToOffsetFFT(markerList[i].endOffset())-img_offset;
+            int begin = offsetFileToOffsetFFT(markerList[markerIndexdragging].beginOffset())-img_offset;
+            int end = offsetFileToOffsetFFT(markerList[markerIndexdragging].endOffset())-img_offset;
 
             if(e->pos().x() > begin+5 && e->pos().x() < end - 5) // moving whole marker
             {
                 this->setCursor(Qt::SizeAllCursor);
-                markerIndexdragging = i;
                 markerEdgedragging = -1;
             }
             else if (e->pos().x() > begin - 5 && e->pos().x() < begin +5) // moving left edge of marker
             {
                 this->setCursor(Qt::SizeHorCursor);
-                markerIndexdragging = i;
                 markerEdgedragging = 0;
             }
             else if (e->pos().x() > end - 5 && e->pos().x() < end +5) // moving right edge of marker
             {
                 this->setCursor(Qt::SizeHorCursor);
-                markerIndexdragging = i;
                 markerEdgedragging = 1;
             }
         }
@@ -298,11 +294,11 @@ void Plot::mouseReleaseEvent(QMouseEvent *)
 {
     if(draggingEnabled) //disable moving plot by dragging
         draggingEnabled = false;
-    if(markerIndexdragging != -1) //disable dragging markers
+    else if(markerIndexdragging != -1) //disable dragging markers
     {
         markerList[markerIndexdragging].correctOffsets(file->bitsPerSample());
-        markerIndexdragging = -1;
         this->setCursor(Qt::ArrowCursor);
+        this->update();
     }
 }
 
@@ -318,7 +314,7 @@ void Plot::mouseMoveEvent(QMouseEvent *e)
         moveGenerate(); //generate new images
         emit ImgOffset(img_offset); // emiting img_offset to scrollbar
     }
-    if(markerIndexdragging != -1)
+    else if(markerIndexdragging != -1)
     {
         if(markerEdgedragging == -1) //drag whole marker
         {
@@ -408,4 +404,34 @@ void Plot::splitFile()
 {
     for(int i =0; i< markerList.count(); i++)
         file->splitFile(&markerList[i]);
+}
+
+void Plot::setZoom(float zoom)
+{
+    imgZoom = zoom;
+    qDebug() << "Plot::setZoom (in status bar) -- waiting until generation finished";
+    while(!generator0->isFinished() && !generator1->isFinished());
+    generator0->setZoomFactor(zoom);
+    generator1->setZoomFactor(zoom);
+    refreshPlot();
+}
+
+void Plot::addMarker()
+{
+    int begin = (this->width()-AX_Y_DESC_SPACE)/2 + img_offset - 0.1*this->width();
+    int end = begin + 0.2*this->width();
+    markerList.append(Markers(offsetFFTToOffsetFile(begin),offsetFFTToOffsetFile(end),"New",""));
+    markerIndexdragging = markerList.count() - 1;
+    this->update();
+    emit MarkerListUpdate(markerIndexdragging);
+}
+
+void Plot::delMarker(int index)
+{
+    if (index != -1 && index < markerList.count())
+        markerList.remove(index);
+//    qDebug() << "deleted: " << index;
+//    for (int i =0 ; i< markerList.count();i++)
+//        qDebug() << markerList[i].label();
+    this->update();
 }
