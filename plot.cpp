@@ -71,8 +71,8 @@ bool Plot::openFile(QString filePath)
     tempStream.setVersion(12);
     //wave file
     file = new WaveFile(filePath);
-    quint16 halfFFTBufferSize = fft.bufferSize() / 2;
-    maxFFToffset = 2 * (int(double(file->samples()) / halfFFTBufferSize + 1.) - 1);
+    quint16 halfFFTBufferSize = fft.bufferSize() / (2*DENSE);
+    maxFFToffset = 2 * file->samples()/(double)halfFFTBufferSize -  1;
     quint16 tempFileHeight = 0;
     int tempFileWidth = 0;
     if (QFile::exists(tempFilePath) && tempFile.size() > halfFFTBufferSize)
