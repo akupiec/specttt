@@ -19,14 +19,14 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <widget class="QWidget" name="centralWidget">
+  <widget class="QWidget" name="centralWidget1">
    <layout class="QGridLayout" name="gridLayout_3">
     <item row="0" column="0">
      <widget class="QSplitter" name="splitter_2">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
-      <widget class="QWidget" name="layoutWidget">
+      <widget class="QWidget" name="layoutWidget2">
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <widget class="QGroupBox" name="groupBox_2">
@@ -142,8 +142,8 @@
                </property>
               </column>
              </widget>
-             <widget class="QWidget" name="layoutWidget">
-              <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1">
+             <widget class="QWidget" name="layoutWidget1">
+              <layout class="QVBoxLayout" name="verticalLayout_1" stretch="0,1">
                <property name="spacing">
                 <number>3</number>
                </property>

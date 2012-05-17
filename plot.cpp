@@ -296,6 +296,7 @@ void Plot::mouseReleaseEvent(QMouseEvent *)
         draggingEnabled = false;
     else if(markerIndexdragging != -1) //disable dragging markers
     {
+        markerEdgedragging = -2; //disable dragging
         markerList[markerIndexdragging].correctOffsets(file->bitsPerSample());
         this->setCursor(Qt::ArrowCursor);
         this->update();
@@ -330,14 +331,14 @@ void Plot::mouseMoveEvent(QMouseEvent *e)
         {
             int newBegin = markerList[markerIndexdragging].beginOffset() + offsetFFTToOffsetFile(e->pos().x()-oldMousePos);
             int end = markerList[markerIndexdragging].endOffset();
-            if (newBegin >=0 && newBegin < end - offsetFFTToOffsetFile(20))
+            if (newBegin >=0 && newBegin < end - static_cast<int>(offsetFFTToOffsetFile(20)))
                 markerList[markerIndexdragging].setBeginOffset(newBegin);
         }
         else if(markerEdgedragging == 1)  //drag left edge of marker
         {
             int begin = markerList[markerIndexdragging].beginOffset();
             int newEnd = markerList[markerIndexdragging].endOffset() + offsetFFTToOffsetFile(e->pos().x()-oldMousePos);
-            if (newEnd <= file->maxOffset() && begin < newEnd - offsetFFTToOffsetFile(20))
+            if (newEnd <= file->maxOffset() && begin < newEnd - static_cast<int>(offsetFFTToOffsetFile(20)))
                 markerList[markerIndexdragging].setEndOffset(newEnd);
         }
         this->update(); //repaint plot
