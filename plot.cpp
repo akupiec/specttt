@@ -53,8 +53,9 @@ void Plot::resetPlot()
     emit ImgOffset(img_offset);
 
     //resetting markers
-    markerList.clear();
     markerIndexdragging = -1;
+    MarkerListUpdate(markerIndexdragging);
+    markerList.clear();
 }
 
 bool Plot::openFile(QString filePath)
@@ -84,7 +85,7 @@ bool Plot::openFile(QString filePath)
     int tempFileWidth = 0;
     if (QFile::exists(tempFilePath) && tempFile.size() > halfFFTBufferSize)
         tempStream >> tempFileHeight >> tempFileWidth;
-    if (halfFFTBufferSize != tempFileHeight && maxFFToffset != tempFileWidth)
+    if (halfFFTBufferSize != tempFileHeight || maxFFToffset != tempFileWidth)
     {
         if (!tempFile.remove())
             return false;
@@ -423,6 +424,8 @@ void Plot::addMarker()
     int end = begin + 0.2*this->width();
     markerList.append(Markers(offsetFFTToOffsetFile(begin),offsetFFTToOffsetFile(end),"New",""));
     markerIndexdragging = markerList.count() - 1;
+    markerList[markerIndexdragging].correctOffsets(file->bitsPerSample());
+    qDebug() << "addMarker -- " <<  markerList[markerIndexdragging].beginOffset() <<  markerList[markerIndexdragging].endOffset();
     this->update();
     emit MarkerListUpdate(markerIndexdragging);
 }
@@ -431,8 +434,5 @@ void Plot::delMarker(int index)
 {
     if (index != -1 && index < markerList.count())
         markerList.remove(index);
-//    qDebug() << "deleted: " << index;
-//    for (int i =0 ; i< markerList.count();i++)
-//        qDebug() << markerList[i].label();
     this->update();
 }

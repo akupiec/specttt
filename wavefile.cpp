@@ -1,6 +1,7 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <cmath>
+#include <QtEndian>
 #include "wavefile.h"
 
 WaveFile::WaveFile(const QString &name) : QFile(name)
@@ -29,12 +30,12 @@ qint64 WaveFile::readHeader()
             if ((memcmp(&file.header.riff.descriptor.id, "RIFF", 4) == 0
                  || memcmp(&file.header.riff.descriptor.id, "RIFX", 4) == 0)
                     && memcmp(&file.header.riff.type, "WAVE", 4) == 0
-                    && memcmp(&file.header.wave.descriptor.id, "fmt ", 4) == 0
-                    && file.header.wave.audioFormat == 1 ) // true when is PCM
+                    && memcmp(&file.header.wave.descriptor.id, "fmt ", 4) == 0)
+                  //  && file.header.wave.audioFormat == 1 ) // true when is PCM
             {
                 while (memcmp(&file.header.data.descriptor.id, "data", 4) != 0)
                 {
-                    result += read(file.header.data.descriptor.size).size(); //changing offset
+                    result += read(1).size(); //changing offset
                     result += read( reinterpret_cast<char *>(&file.header.data), sizeof(File::Chunk) ); //overwrite header.data
                 }
                 qDebug() << "readHeader:file name" << fileName()
@@ -67,28 +68,16 @@ qint64 WaveFile::readData(double *buffer, int bufferSize, int channelId = 0)
                 << " - changed to channel 0" ;
         channelId = 0;
     }
-
-    bool ok; //helping bool for converting string to int
-    QString Sample , tmp; // sample -storing little endian tmp - storing big ednian
+    qint16 x;
 
     if (file.header.wave.bitsPerSample > 0)
     {
         for (int i=0; i<bufferSize && pos()<posDataEnd(); i++)
         {
-            //from little endian
-            Sample = read( (file.header.wave.bitsPerSample/8) * file.header.wave.numChannels ).toHex();
-            result += Sample.size() / 2;
-            tmp = Sample.right(2);
-            Sample.remove(Sample.length()-2,2); //remove last 2 chars
-            tmp.append(Sample.right(2));
-            double oneSample = tmp.toInt(&ok,16);
-            // ??
-            if (oneSample > 32767)
-                oneSample -= 65535;
-            if (oneSample == 0)
-                buffer[i] = 0;
-            else
-                buffer[i] = oneSample/32767;
+            read(reinterpret_cast<char *>(&x),file.header.wave.bitsPerSample/8);
+            read((file.header.wave.numChannels-1)*file.header.wave.bitsPerSample/8);
+            x = qFromLittleEndian(x);
+            buffer[i] = qFromLittleEndian(x)/32767.;
         }
     }
     else {
@@ -161,6 +150,7 @@ void WaveFile::detectBeeps(QVector<Markers> *markers, int channelId)
 
 bool WaveFile::splitFile(Markers *splitingMarker, bool overWrite)
 {
+    int silenceLength = file.header.wave.byteRate*0.05; // silence length in seconds at begin and end of file
     QString newName = splitingMarker->label();
     WaveFile newFile;
     // protecting from rewrite old file
@@ -179,12 +169,19 @@ bool WaveFile::splitFile(Markers *splitingMarker, bool overWrite)
     {
         //writing new header
         int size = splitingMarker->endOffset()-splitingMarker->beginOffset();
-        if(newFile.saveNewHeader(size, &this->file.header) == -1)
+        if(newFile.saveNewHeader(size+file.headerLength+2*silenceLength, &this->file.header) == -1)
             return false;
+
         //writing samples
-        Q_ASSERT(seek(posDataBeg()+splitingMarker->beginOffset()));
+        this->seek(posDataBeg() + splitingMarker->beginOffset());
+        qDebug() <<" WaveFile::splitFile -- " << splitingMarker->beginOffset() << size;
+        qDebug() << this->pos();
+        QByteArray silence(silenceLength,0);
         QByteArray temp_samples = read(size);
+        qDebug() << this->pos();
+        newFile.write(silence);
         newFile.write(temp_samples);
+        newFile.write(silence);
     }
     else
     {

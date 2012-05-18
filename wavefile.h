@@ -62,8 +62,8 @@ private:
             quint16     audioFormat;
             quint16     numChannels;
             quint32     sampleRate;
-            quint32     byteRate;
-            quint16     blockAlign;
+            quint32     byteRate; //bytes per second
+            quint16     blockAlign; //bytes per sample, this value is not affected by number of channels
             quint16     bitsPerSample;
         };
 

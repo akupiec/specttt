@@ -52,8 +52,6 @@ private:
 
     //file
     QString filePath;
-
-    bool allowEditingCells;
 };
 
 #endif // MAINWINDOW_H
