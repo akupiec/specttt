@@ -19,51 +19,40 @@ ImageGenerator::ImageGenerator(WaveFile *file, QTemporaryFile *fftData, QVector<
 
 void ImageGenerator::run()
 {
-    while (!workQueue.isEmpty())
+    QTime time;
+    time.start();
+    img = img;
+    if (!img || img->isNull())
+        return;
+    fftData->seek(fftDataHeaderSize + height * fftRange.first);
+    char data;
+    int uData;
+    for (int x=0; x<fftSamples; x++) // FFT columns loop
     {
-        QTime time;
-        time.start();
-        ImageData d = workQueue.dequeue();
-        img = d.img;
-        if (!img || img->isNull())
-            break;
-        fftRange = d.fftRange;
-        fftSamples = d.fftSamples;
-        fftData->seek(fftDataHeaderSize + height * fftRange.first);
-        char data;
-        int uData;
-        for (int x=0; x<fftSamples; x++) // FFT columns loop
+        for (int y=height-1; y>=0; y--) // FFT rows loop
         {
-            for (int y=height-1; y>=0; y--) // FFT rows loop
-            {
-                fftData->read(&data,1); // read pixel data from FFT temp file
-                uData = data;
-                if (data < 0)
-                    uData += 256; // signed to unsigned int range 0-255
-                if(img && !img->isNull())
-                    img->setPixel(x,y,colors->at(uData)); // set pixel color
-            }
+            fftData->read(&data,1); // read pixel data from FFT temp file
+            uData = data;
+            if (data < 0)
+                uData += 256; // signed to unsigned int range 0-255
+            if(img && !img->isNull())
+                img->setPixel(x,y,colors->at(uData)); // set pixel color
         }
-        *img = img->scaled(zoomFactor_*img->width(), zoomFactor_*img->height(),
-                           Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        //qDebug() << "Time:" << time.elapsed() << fftRange.first << img->width() << fftSamples;
     }
+   *img = img->scaled(zoomFactor_X*img->width(), zoomFactor_Y*img->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+
 }
 
 QImage * ImageGenerator::plotImage(int startFFT, int stopFFT)
 {
-    ImageData d;
-    d.fftRange.first = startFFT;
-    d.fftRange.second = stopFFT;
-    d.fftSamples = stopFFT - startFFT + 1;
+    fftRange.first = startFFT;
+    fftRange.second = stopFFT;
+    fftSamples = stopFFT - startFFT + 1;
     if (width < stopFFT)
-        d.fftSamples = width - startFFT;
-    QSize imgSize(d.fftSamples,height);
-    d.img = new QImage(imgSize, QImage::Format_RGB32);
-    if (d.img != 0 && !d.img->isNull())
-    {
-        workQueue.enqueue(d);
+        fftSamples = width - startFFT;
+    QSize imgSize(fftSamples,height);
+    img = new QImage(imgSize, QImage::Format_RGB32);
+    if (img != 0 && !img->isNull())
         start();
-    }
-    return d.img;
+    return img;
 }
