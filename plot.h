@@ -7,15 +7,20 @@
 #include <QTemporaryFile>
 #include <QPainter>
 #include <QMouseEvent>
+#include <QDir>
+
 #include "wavefile.h"
 #include "fft.h"
 #include "markers.h"
 #include "imagegenerator.h"
+#include "settings.h"
+#include "xml.h"
 
 class Settings;
 
-//klasa jest odpowiedzialna za koordynacje danych miêdzy wavefile a fft
-//jest to klasa odpowiedzialna za rysowanie wykresu*   ///// ja by to i tak wywali³ o osobnej ³atwiej bêdzie nawigowaæ danymi nie pogubimy sie co dlaczego i gdzie
+#define AX_X_DESC_SPACE 30
+#define AX_Y_DESC_SPACE 60
+
 class Plot : public QWidget
 {
     Q_OBJECT
@@ -26,18 +31,34 @@ public:
 
     //Reading File / creating WaveFile object
     bool openFile(QString filePath);
-    // ??? what exacly this one should do ?
-    bool saveFile(QString filePath);
-    // ...........
-    bool splitFile(QString filePath);
+    //Retruning true if any file was readed
+    bool isOpened(){if(file != 0) return true; else return false;}
+    //Splitting Opened Wave File where splitters are markers
+    void splitFile();
+    //refreshing plot, regenerating imges and setting display positon to begining of plot
+    void refreshPlot();
+
+    //curently using zoom factor
+    float zoom() {return imgZoom;}
+    //setting new zoom
+    void setZoom(float zoom);
+
+    //auto detect all beeps in wave file
+    void detectBeeps(int channelId = 0);
+
+    //setting marker of given index
+    void selectMarker(int index){if (index < markerList.count()) markerIndexdragging = index; else markerIndexdragging = -1; this->update();}
+    void delMarker(int index); // deleting specyfic marker
 
 signals:
     void MaximumOffset(int); // emit max width of plot
     void ImgOffset(int); // emit curent position
+    void MarkerListUpdate(int); //emit curently selected index and refreshing ui table of markers
 
 private slots:
     void setImgOffset(int); // connected to horizontal scroll bar for setting imr_offset
     void imageGenerated(); // finished generation of new img
+    void addMarker(); // adding new marker to plot
 
 private:
     //Resetting all setting, should be called before opening new file
@@ -45,6 +66,8 @@ private:
 
     //FFTFile
     int maxFFToffset;
+    int offsetFileToOffsetFFT(quint32 offset) {return (offset*maxFFToffset/(double)file->maxOffset())*imgZoom;}
+    quint32 offsetFFTToOffsetFile(int offset) {return (offset/imgZoom)*file->maxOffset()/maxFFToffset;}
 
     //Painting
     virtual void paintEvent(QPaintEvent *);
@@ -52,13 +75,15 @@ private:
     // img plotis in memory
     QImage *img0;
     QImage *img1;
-    int img_realWidth; //width of img without rounding error
+    int img_realWidth; //width of img without rounding error    
 
     //generating
-    ImageGenerator *generator; //pointer to thread class
+    ImageGenerator *generator0; //pointer to thread class
+    ImageGenerator *generator1; //pointer to thread class
     inline void generate(bool img_nr = 0, int offset = 0); //using ImageGenerator for new img
     inline void moveGenerate(); //calling porper generate function based on current img_offset
     bool img_nr; //displeing img0 or img1
+    float imgZoom; //X axes scaling
     int last_generated_offset; //for protection double generation same img
 
     //config
@@ -66,13 +91,17 @@ private:
     static const int grindVerticalSpace = 40;
     static const int grindHorizontalSpace = 20;
     static const int generateImgBuffor = 1000; // have to be calculated how much extra ram is needed for it (at 20000 is using extra ~280-380 Mb)
-    static const float imgZoom = 1.2;
 
     //moving
     int img_offset; // the same as FFT_offset
     int img_offset_old; // previous img_offset
+    //setting max_img_offset
+    void setMaxImgOffset(){max_img_offset = maxFFToffset*imgZoom-this->width()+AX_Y_DESC_SPACE+frameWidth;
+                              if (max_img_offset < 0) max_img_offset =0;}
     int max_img_offset; // and of imgae in pixels
     bool draggingEnabled; // true when mose left button is pressed
+    int markerIndexdragging; // id curently dragging or selected marker, -1 when dragging is disable
+    int markerEdgedragging; //-1 when dragging whole marker, 0 when dragging left edge, 1 for right edge
     virtual void mousePressEvent(QMouseEvent *);
     virtual void mouseReleaseEvent(QMouseEvent *);
     virtual void mouseMoveEvent(QMouseEvent *);
@@ -84,6 +113,7 @@ public:
     QVector<Markers> markerList; // markers list object
     QTemporaryFile tempFile; // plot data temporary file
     Settings *settings; // plot settings object
+    Xml *xml;
 };
 
 #endif // PLOT_H

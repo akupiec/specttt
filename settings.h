@@ -9,8 +9,7 @@ class Settings : public QSettings
 {
     Q_OBJECT
 public:
-    Settings(QObject *parent = 0);
-    Settings(const QString &organization, const QString &application=QString(), QObject *parent=0);
+    Settings(const QString &fileName, Format format, QObject *parent = 0 );
     ~Settings();
     void setColors();
     void saveColors();
