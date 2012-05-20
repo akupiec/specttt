@@ -10,6 +10,7 @@ class Xml
 {
 public:
     Xml(QString name) {fileName = name;}
+    ~Xml() {}
     void saveMarkers(QVector<Markers> *markers);
     void loadMarkers(QVector<Markers> *markers);
 private:

@@ -18,8 +18,9 @@ SOURCES += main.cpp\
     markers.cpp \
     imagegenerator.cpp \
     settings.cpp \
-    colorsdialog.cpp \
-    xml.cpp
+    config/colorswidget.cpp \
+    xml.cpp \
+    configdialog.cpp
 
 HEADERS  += mainwindow.h \
     wavefile.h \
@@ -29,19 +30,13 @@ HEADERS  += mainwindow.h \
     imagegenerator.h \
     cyclicqueue.h \
     settings.h \
-    colorsdialog.h \
-    xml.h
+    config/colorswidget.h \
+    xml.h \
+    configdialog.h
 
 FORMS    += mainwindow.ui \
-    config.ui \
-    colorsdialog.ui
+    config/colorswidget.ui \
+    configdialog.ui
 
 OTHER_FILES += \
     TODO
-
-
-
-
-
-
-

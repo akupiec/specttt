@@ -1,27 +1,28 @@
 #ifndef COLORSDIALOG_H
 #define COLORSDIALOG_H
 
-#include <QDialog>
+#include <QWidget>
 
 namespace Ui {
-class ColorsDialog;
+class ColorsWidget;
 }
 class Settings;
+class QPushButton;
 
-class ColorsDialog : public QDialog
+class ColorsWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit ColorsDialog(Settings *settings, QWidget *parent = 0);
-    ~ColorsDialog();
+    explicit ColorsWidget(Settings *settings, QWidget *parent = 0);
+    ~ColorsWidget();
 
 protected:
     void resizeEvent(QResizeEvent *);
     void showEvent(QShowEvent *);
 
 private:
-    Ui::ColorsDialog *ui;
+    Ui::ColorsWidget *ui;
     Settings *settings;
     QLinearGradient spectrumGradient;
     QColor *spectrumColors;

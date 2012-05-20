@@ -3,17 +3,13 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "plot.h"
-#include "colorsdialog.h"
+#include "configdialog.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
-    //config ui
-    uiConfig.setupUi(&config);
-    connect(uiConfig.buttonBox,SIGNAL(clicked(QAbstractButton*)),this,SLOT(on_config_buttonBox_clicked(QAbstractButton*)));
 
     // Table of markers
     ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -56,12 +52,6 @@ void MainWindow::setScrollBarMaximumValue(int value)
     ui->horizontalScrollBar->setMaximum(value);
 }
 
-void MainWindow::on_actionColors_triggered()
-{
-    ColorsDialog *dialog = new ColorsDialog(ui->plot->settings,this);
-    dialog->show();
-}
-
 void MainWindow::on_actionSplit_triggered()
 {
     ui->plot->splitFile();
@@ -69,20 +59,13 @@ void MainWindow::on_actionSplit_triggered()
 
 void MainWindow::on_actionPreferences_triggered()
 {
-    config.exec();
+    ConfigDialog dialog(ui->plot->settings,this);
+    dialog.exec();
 }
 
 void MainWindow::on_actionExit_triggered()
 {
     exit(0);
-}
-
-void MainWindow::on_config_buttonBox_clicked(QAbstractButton *button)
-{
-    if(button->text() == tr("OK"))
-        qDebug() << "OK" ;
-    if(button->text() == tr("Cancel"))
-        qDebug()  << "Cancel";
 }
 
 void MainWindow::on_buttonRefreshPlot_clicked()
@@ -118,7 +101,7 @@ void MainWindow::on_actionMark_detect_triggered()
 }
 
 void MainWindow::on_tableWidget_cellChanged(int row, int column)
-{    
+{
     if(allowEditingCells && column == 0)
         ui->plot->markerList[row].setLabel(ui->tableWidget->item(row,column)->text());
 }

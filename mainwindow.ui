@@ -228,7 +228,7 @@
      <x>0</x>
      <y>0</y>
      <width>862</width>
-     <height>21</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuTest">
@@ -254,7 +254,6 @@
     <property name="title">
      <string>Edit</string>
     </property>
-    <addaction name="actionColors"/>
     <addaction name="actionPreferences"/>
    </widget>
    <addaction name="menuTest"/>
@@ -283,11 +282,6 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
-   </property>
-  </action>
-  <action name="actionColors">
-   <property name="text">
-    <string>Colors</string>
    </property>
   </action>
   <action name="actionPreferences">

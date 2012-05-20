@@ -1,6 +1,6 @@
 #include "settings.h"
-#include "colorsdialog.h"
-#include "ui_colorsdialog.h"
+#include "colorswidget.h"
+#include "ui_colorswidget.h"
 
 #include <QPainter>
 #include <QColorDialog>
@@ -8,9 +8,9 @@
 static const int spectrumMargin = 15;
 static const int spectrumDoubleMargin = 2 * spectrumMargin;
 
-ColorsDialog::ColorsDialog(Settings *s, QWidget *parent) :
-    QDialog(parent, Qt::Dialog),
-    ui(new Ui::ColorsDialog)
+ColorsWidget::ColorsWidget(Settings *s, QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::ColorsWidget)
 {
     settings = s;
     ui->setupUi(this);
@@ -31,27 +31,25 @@ ColorsDialog::ColorsDialog(Settings *s, QWidget *parent) :
     connectPushButtonColor(ui->minPushButton);
     connectPushButtonColor(ui->maxPushButton);
     connectPushButtonColor(ui->overflowPushButton);
-
-    connect(this, SIGNAL(accepted()), SLOT(saveColors()));
 }
 
-ColorsDialog::~ColorsDialog()
+ColorsWidget::~ColorsWidget()
 {
     delete ui;
     delete spectrumColors;
 }
 
-void ColorsDialog::resizeEvent(QResizeEvent *)
+void ColorsWidget::resizeEvent(QResizeEvent *)
 {
     showSpectrum();
 }
 
-void ColorsDialog::showEvent(QShowEvent *)
+void ColorsWidget::showEvent(QShowEvent *)
 {
     showSpectrum();
 }
 
-void ColorsDialog::showSpectrum()
+void ColorsWidget::showSpectrum()
 {
     spectrumGradient.setStart(0, ui->spectrumLabel->height()-spectrumDoubleMargin);
     spectrumGradient.setColorAt(0.0, spectrumColors[1]);
@@ -64,12 +62,12 @@ void ColorsDialog::showSpectrum()
     ui->spectrumLabel->setPixmap(pixmap);
 }
 
-void ColorsDialog::connectPushButtonColor(QPushButton *button)
+void ColorsWidget::connectPushButtonColor(QPushButton *button)
 {
     connect(button, SIGNAL(clicked()), SLOT(setPushButtonColor()));
 }
 
-void ColorsDialog::setPushButtonColor(QPushButton *button, const QColor &c)
+void ColorsWidget::setPushButtonColor(QPushButton *button, const QColor &c)
 {
     QColor color = c;
     if (button == 0)
@@ -92,7 +90,7 @@ void ColorsDialog::setPushButtonColor(QPushButton *button, const QColor &c)
     showSpectrum();
 }
 
-void ColorsDialog::saveColors()
+void ColorsWidget::saveColors()
 {
     settings->colors()->replace(0, spectrumColors[0].rgb());
     int width = settings->colors()->size() - 2;

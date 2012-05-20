@@ -1,6 +1,6 @@
 #include "plot.h"
 
-#define SPECT_PROJECT_NAME "Spect2.ini"
+#define SPECT_PROJECT_NAME "Spect2"
 
 Plot::Plot(QWidget *parent) :
     QWidget(parent)
@@ -14,19 +14,23 @@ Plot::Plot(QWidget *parent) :
     img_nr = 0;
     generator0 = 0;
     generator1 = 0;
-    //config   
+    //config
     imgZoom =1;
+    settings = new Settings(QString(SPECT_PROJECT_NAME),QSettings::IniFormat,this);
 }
 
 Plot::~Plot()
 {
-    delete file; file = 0;
-    delete img0; img0 = 0;
-    delete img1; img1 = 0;
-    delete generator0; generator0 = 0;
-    delete generator1; generator1 = 0;
-    delete settings; settings = 0;
-    delete xml;
+    if (file)
+    {   // SIGSEGV protection
+        delete file;
+        delete generator0;
+        delete generator1;
+        delete xml;
+    }
+    delete img0;
+    delete img1;
+    delete settings;
 }
 
 void Plot::resetPlot()
@@ -76,7 +80,6 @@ bool Plot::openFile(QString filePath)
     //wave file
     file = new WaveFile(filePath);
     xml = new Xml(file->fileName());
-    settings = new Settings(QString(SPECT_PROJECT_NAME),QSettings::IniFormat,this);
 
     quint16 halfFFTBufferSize = fft.bufferSize() / 2;
     maxFFToffset = 2 * (int(double(file->samples()) / halfFFTBufferSize + 1.) - 1);
@@ -115,7 +118,7 @@ bool Plot::openFile(QString filePath)
     connect(generator0, SIGNAL(finished()), this, SLOT(imageGenerated()));
     connect(generator1, SIGNAL(finished()), this, SLOT(imageGenerated()));
 
-    img_nr = 0;    
+    img_nr = 0;
     setMaxImgOffset();
     emit MaximumOffset(max_img_offset);
     generate(img_nr,0);
@@ -162,7 +165,7 @@ void Plot::paintEvent(QPaintEvent *)
         }
     }
 
-    //markres    
+    //markres
     painter.setPen(QPen(QBrush(Qt::NoBrush),0));
     painter.setBrush(QColor(0,0,255,100));
     for(int i=0; i<markerList.count();i++)
