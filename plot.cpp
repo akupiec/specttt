@@ -79,26 +79,31 @@ bool Plot::openFile(QString filePath)
     xml = new Xml(file->fileName());
     settings = new Settings(QString(SPECT_PROJECT_NAME),QSettings::IniFormat,this);
 
-    quint16 halfFFTBufferSize = fft.bufferSize() / 2;
-    maxFFToffset = 2 * (int(double(file->samples()) / halfFFTBufferSize + 1.) - 1);
+    halfFFTBufferSize = fft.bufferSize() / 2; //quint half of buffer fft
+    quint16 FFTBufferGraduation = halfFFTBufferSize / DENSE; // lenght of graduation depended of densing degree
+    maxFFToffset = 2 * (int(double(file->samples()) / FFTBufferGraduation + 1.) - 1); //amout of fft samples in file
     quint16 tempFileHeight = 0;
     int tempFileWidth = 0;
     if (QFile::exists(tempFilePath) && tempFile.size() > halfFFTBufferSize)
-        tempStream >> tempFileHeight >> tempFileWidth;
-    if (halfFFTBufferSize != tempFileHeight || maxFFToffset != tempFileWidth)
+        tempStream >> tempFileHeight >> tempFileWidth; //reading header form file
+    else
+        qDebug() << "Plot::openFile -- temp file read error or file not exists";
+    if (halfFFTBufferSize != tempFileHeight || maxFFToffset != tempFileWidth) // checking if temp file need to be regenerated
     {
-        if (!tempFile.remove())
+        qDebug() << "Plot::openFile -- generating new FFT this may take a while, please wait...";
+        if (!tempFile.remove()) //removing old temp file
             return false;
         tempFile.setFileName(tempFilePath);
-        if (!tempFile.open() || !tempFile.seek(0))
+        if (!tempFile.open() || !tempFile.seek(0)) //creating new one
             return false;
         tempStream.setDevice(&tempFile);
-        tempStream << halfFFTBufferSize << maxFFToffset; // temp file header
-        for (int i=0; i<maxFFToffset; i++) {
-            file->readData(buffer,fft.bufferSize(),i*halfFFTBufferSize,0);
+        tempStream << halfFFTBufferSize << maxFFToffset; // saving new header to temp file
+        for (int i=0; i<maxFFToffset; i++) //lenght of file loop
+        {
+            file->readData(buffer,fft.bufferSize(),i*FFTBufferGraduation,0);
             fft.makeWindow(buffer);
             fft.countFFT(buffer);
-            for (qint16 i=0; i<halfFFTBufferSize; i++)
+            for (qint16 i=0; i<halfFFTBufferSize; i++) // height of file loop (height of one FFT column)
             {
                 if (buffer[i] < 1.0 && buffer[i] >= 0.0)
                     tempStream << (uchar)(buffer[i]*255);
@@ -107,12 +112,13 @@ bool Plot::openFile(QString filePath)
             }
         }
     }
+    else
+        qDebug() << "Plot::openFile -- reading from temp file" << tempFile.fileName();
     tempFile.close();
-    qDebug() << tempFile.fileName();
     generator0 = new ImageGenerator(file, &tempFile, settings->colors(), this);
     generator1 = new ImageGenerator(file, &tempFile, settings->colors(), this);
-    generator0->setZoomFactor(imgZoom);
-    generator1->setZoomFactor(imgZoom);
+    generator0->setZoomFactorX(imgZoom);
+    generator1->setZoomFactorX(imgZoom);
     connect(generator0, SIGNAL(finished()), this, SLOT(imageGenerated()));
     connect(generator1, SIGNAL(finished()), this, SLOT(imageGenerated()));
 
@@ -138,14 +144,13 @@ void Plot::paintEvent(QPaintEvent *)
     painter.drawRect(0,0,this->width(),this->height());
 
     //painting image
-    if(generator0)
+    if(generator0 && generator1)
     {
         if (!img_nr) //img0
         {
-            if (img0)
+            if (img0 && generator0->isFinished())
             {
                 // if generator is working here will couse carash
-                if(generator0->isFinished())
                 painter.drawImage(frameWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img0);
                 if(img1 && generator1->isFinished())
                     painter.drawImage(frameWidth+img0->width()-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img1->height(),*img1);
@@ -153,9 +158,8 @@ void Plot::paintEvent(QPaintEvent *)
         }
         else // img1
         {
-            if(img1)
+            if(img1 && generator1->isFinished())
             {
-                if(generator1->isFinished())
                 painter.drawImage(frameWidth-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img1->height(),*img1);
                 if(img0 && generator0->isFinished())
                     painter.drawImage(frameWidth+img1->width()-(img_offset%img_realWidth),this->height()-AX_X_DESC_SPACE-frameWidth-img0->height(),*img0);
@@ -163,7 +167,7 @@ void Plot::paintEvent(QPaintEvent *)
         }
     }
 
-    //markres    
+    //markres
     painter.setPen(QPen(QBrush(Qt::NoBrush),0));
     painter.setBrush(QColor(0,0,255,100));
     for(int i=0; i<markerList.count();i++)
@@ -195,7 +199,7 @@ void Plot::paintEvent(QPaintEvent *)
         offset = (i*grindVerticalSpace)+frameWidth;
         painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
         if (file != 0)
-            value.setNum((((offset-frameWidth+img_offset)*file->time()/maxFFToffset)/generator0->zoomFactor()),'f',3);
+            value.setNum((((offset-frameWidth+img_offset)*file->time()/maxFFToffset)/generator0->zoomFactorX()),'f',3);
         else
             value = "0.0";
         painter.drawText(offset,this->height()-AX_X_DESC_SPACE+frameWidth+15,value);
@@ -242,21 +246,23 @@ void Plot::resizeEvent(QResizeEvent *)
 inline void Plot::generate(bool nr, int offset)
 {
     //work only when generator exist (file reader) and is not busy
-    if (generator0)
+    if (generator0 && generator1)
     {
-        if(!nr && !generator0->isRunning())
+        double zoomY = (double)this->plotHeight()/halfFFTBufferSize;
+        generator0->setZoomFactorY(zoomY);
+        generator1->setZoomFactorY(zoomY);
+        if(!nr && !generator0->isRunning() && !generator1->isRunning())
         {
             delete img0; img0 = 0; //deleting old img
             img0 = generator0->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom); // generating new one
             last_generated_offset = offset;
         }
-        else if(!generator1->isRunning())
+        else if(!generator1->isRunning() && !generator0->isRunning())
         {
-            delete img1;
+            delete img1; img1 =0;
             img1 = generator1->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom);
             last_generated_offset = offset;
         }
-
     }
 }
 
@@ -413,8 +419,8 @@ void Plot::setZoom(float zoom)
     imgZoom = zoom;
     qDebug() << "Plot::setZoom (in status bar) -- waiting until generation finished";
     while(!generator0->isFinished() && !generator1->isFinished());
-    generator0->setZoomFactor(zoom);
-    generator1->setZoomFactor(zoom);
+    generator0->setZoomFactorX(zoom);
+    generator1->setZoomFactorX(zoom);
     refreshPlot();
 }
 
@@ -435,4 +441,13 @@ void Plot::delMarker(int index)
     if (index != -1 && index < markerList.count())
         markerList.remove(index);
     this->update();
+}
+int Plot::plotWidth()
+{
+    return this->width() - AX_Y_DESC_SPACE - 2*frameWidth;
+}
+
+int Plot::plotHeight()
+{
+    return this->height() - AX_X_DESC_SPACE - 2*frameWidth;
 }
