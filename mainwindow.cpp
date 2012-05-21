@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
     size.append(10);
     size.append(800);
     ui->splitter_2->setSizes(size);
-
+    ui->zoomSpinBox->setValue(ui->plot->settings->plotZoomX() * 100);
 }
 
 MainWindow::~MainWindow()
@@ -60,7 +60,10 @@ void MainWindow::on_actionSplit_triggered()
 void MainWindow::on_actionPreferences_triggered()
 {
     ConfigDialog dialog(ui->plot->settings,this);
-    dialog.exec();
+    if (dialog.exec() == QDialog::Accepted)
+    {   // reload settings
+        ui->plot->openFile(ui->plot->file->fileName());
+    }
 }
 
 void MainWindow::on_actionExit_triggered()

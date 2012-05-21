@@ -9,16 +9,36 @@ class Settings : public QSettings
 {
     Q_OBJECT
 public:
-    Settings(const QString &fileName, Format format, QObject *parent = 0 );
+    Settings(const QString &fileName, Format format, QObject *parent = 0);
     ~Settings();
+    // colors
     void setColors();
     void saveColors();
-    void saveColors(const QVector<QRgb> &baseColors); // baseColors is vector array containing only 4 important colors
-    QVector<QRgb> *colors() { return &colorVector; }
+    QVector<QRgb> *colors() { return &rgbVector; }
+    // plot
+    void readPlotSettings();
+    void savePlotSettings();
+    int plotFrameWidth() const { return frameWidth; }
+    void setPlotFrameWidth(int v) { frameWidth = v; }
+    int plotGridVerticalSpacing() const { return gridVerticalSpace; }
+    void setPlotGridVerticalSpacing(int v) { gridVerticalSpace = v; }
+    int plotGridHorizontalSpacing() const { return gridHorizontalSpace; }
+    void setPlotGridHorizontalSpacing(int v) { gridHorizontalSpace = v; }
+    int plotImageGeneratorBuffer() const { return generateImgBuffer; }
+    void setPlotImageGeneratorBuffer(int v) { generateImgBuffer = v; }
+    float plotZoomX() const { return imgZoom; }
+    void setPlotZoomX(float v) { imgZoom = v; }
 
 private:
     void init();
-    QVector<QRgb> colorVector;
+    // colors
+    QVector<QRgb> rgbVector;
+    // plot
+    int frameWidth;
+    int gridVerticalSpace;
+    int gridHorizontalSpace;
+    int generateImgBuffer;
+    float imgZoom;
 
 signals:
 

@@ -1,28 +1,32 @@
 #include <QLinearGradient>
 #include <QPainter>
+#include <QDebug>
 #include "settings.h"
 
 Settings::Settings(const QString &fileName, Format format, QObject *parent)
     : QSettings(fileName, format, parent)
 {
     init();
+    qDebug() << this->fileName();
 }
 
 Settings::~Settings()
 {
     saveColors();
+    savePlotSettings();
 }
 
 void Settings::init()
 {
-    colorVector.resize(256);
+    rgbVector.resize(256);
     setColors();
+    readPlotSettings();
 }
 
 void Settings::setColors()
 {
     beginGroup("Colors");
-    colorVector[0] = value("null","lightslategrey").value<QColor>().rgb();
+    rgbVector[0] = value("null","lightslategrey").value<QColor>().rgb();
     QLinearGradient gradient(0,0,253,0);
     gradient.setColorAt(0.0, value("start","coral").value<QColor>());
     gradient.setColorAt(1.0, value("stop","moccasin").value<QColor>());
@@ -30,27 +34,39 @@ void Settings::setColors()
     QPainter painter(&image);
     painter.fillRect(0,0,image.width(),image.height(),QBrush(gradient));
     for (int x=0; x<image.width(); x++)
-        colorVector[x+1] = image.pixel(x,0);
-    colorVector[255] = value("overflow","lime").value<QColor>().rgb();
+        rgbVector[x+1] = image.pixel(x,0);
+    rgbVector[255] = value("overflow","lime").value<QColor>().rgb();
     endGroup();
 }
 
 void Settings::saveColors()
 {
     beginGroup("Colors");
-    setValue("null", QColor(colorVector[0]).name());
-    setValue("start", QColor(colorVector[1]).name());
-    setValue("stop", QColor(colorVector[254]).name());
-    setValue("overflow", QColor(colorVector[255]).name());
+    setValue("null", QColor(rgbVector[0]).name());
+    setValue("start", QColor(rgbVector[1]).name());
+    setValue("stop", QColor(rgbVector[254]).name());
+    setValue("overflow", QColor(rgbVector[255]).name());
     endGroup();
 }
 
-void Settings::saveColors(const QVector<QRgb> &colors)
+void Settings::readPlotSettings()
 {
-    beginGroup("Colors");
-    setValue("null", QColor(colors[0]).name());
-    setValue("start", QColor(colors[1]).name());
-    setValue("stop", QColor(colors[2]).name());
-    setValue("overflow", QColor(colors[3]).name());
+    beginGroup("Plot");
+    frameWidth = value("frameWidth", 2).toInt();
+    gridVerticalSpace = value("gridVerticalSpace", 40).toInt();
+    gridHorizontalSpace = value("gridHorizontalSpace", 20).toInt();
+    generateImgBuffer = value("imageGeneratorBuffer", 1000).toInt();
+    imgZoom = value("zoomX", 1.0f).toFloat();
+    endGroup();
+}
+
+void Settings::savePlotSettings()
+{
+    beginGroup("Plot");
+    setValue("frameWidth", frameWidth);
+    setValue("gridVerticalSpace", gridVerticalSpace);
+    setValue("gridHorizontalSpace", gridHorizontalSpace);
+    setValue("imageGeneratorBuffer", generateImgBuffer);
+    setValue("zoomX", imgZoom);
     endGroup();
 }

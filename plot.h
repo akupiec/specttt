@@ -75,7 +75,7 @@ private:
     // img plotis in memory
     QImage *img0;
     QImage *img1;
-    int img_realWidth; //width of img without rounding error    
+    int img_realWidth; //width of img without rounding error
 
     //generating
     ImageGenerator *generator0; //pointer to thread class
@@ -87,10 +87,10 @@ private:
     int last_generated_offset; //for protection double generation same img
 
     //config
-    static const int frameWidth = 2;
-    static const int grindVerticalSpace = 40;
-    static const int grindHorizontalSpace = 20;
-    static const int generateImgBuffor = 1000; // have to be calculated how much extra ram is needed for it (at 20000 is using extra ~280-380 Mb)
+    int frameWidth;
+    int gridVerticalSpace;
+    int gridHorizontalSpace;
+    int generateImgBuffer; // have to be calculated how much extra ram is needed for it (at 20000 is using extra ~280-380 Mb)
 
     //moving
     int img_offset; // the same as FFT_offset

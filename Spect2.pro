@@ -20,7 +20,8 @@ SOURCES += main.cpp\
     settings.cpp \
     config/colorswidget.cpp \
     xml.cpp \
-    configdialog.cpp
+    configdialog.cpp \
+    config/plotwidget.cpp
 
 HEADERS  += mainwindow.h \
     wavefile.h \
@@ -32,11 +33,13 @@ HEADERS  += mainwindow.h \
     settings.h \
     config/colorswidget.h \
     xml.h \
-    configdialog.h
+    configdialog.h \
+    config/plotwidget.h
 
 FORMS    += mainwindow.ui \
     config/colorswidget.ui \
-    configdialog.ui
+    configdialog.ui \
+    config/plotwidget.ui
 
 OTHER_FILES += \
     TODO

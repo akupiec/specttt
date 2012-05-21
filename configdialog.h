@@ -7,6 +7,7 @@ namespace Ui {
 class ConfigDialog;
 }
 class ColorsWidget;
+class PlotWidget;
 class Settings;
 
 class ConfigDialog : public QDialog
@@ -19,10 +20,13 @@ public:
 
 public slots:
     void accept();
+    void setCurrentWidget(int);
 
 private:
     Ui::ConfigDialog *ui;
     ColorsWidget *colorsWidget;
+    PlotWidget *plotWidget;
+    QWidgetList widgetList;
 };
 
 #endif // CONFIGDIALOG_H

@@ -1,13 +1,13 @@
 #include "plot.h"
 
-#define SPECT_PROJECT_NAME "Spect2"
+#define SPECT_PROJECT_NAME "Spect2.ini"
 
 Plot::Plot(QWidget *parent) :
     QWidget(parent)
 {
     file = 0;
     img_offset = 0;
-    draggingEnabled =0; // disable moving plot
+    draggingEnabled = 0; // disable moving plot
     markerIndexdragging = -1; //disable dragging markers
     img0 = 0;
     img1 = 0;
@@ -15,8 +15,12 @@ Plot::Plot(QWidget *parent) :
     generator0 = 0;
     generator1 = 0;
     //config
-    imgZoom =1;
     settings = new Settings(QString(SPECT_PROJECT_NAME),QSettings::IniFormat,this);
+    frameWidth = settings->plotFrameWidth();
+    gridVerticalSpace = settings->plotGridVerticalSpacing();
+    gridHorizontalSpace = settings->plotGridHorizontalSpacing();
+    generateImgBuffer = settings->plotImageGeneratorBuffer();
+    imgZoom = settings->plotZoomX();
 }
 
 Plot::~Plot()
@@ -190,11 +194,11 @@ void Plot::paintEvent(QPaintEvent *)
     //Veritical
     painter.setPen(QPen(QBrush(Qt::white),1,Qt::DotLine));
     QString value;
-    int grindVerticalCount = ((this->width()-AX_Y_DESC_SPACE-frameWidth)/grindVerticalSpace)+1; //amout of grind lines
+    int grindVerticalCount = ((this->width()-AX_Y_DESC_SPACE-frameWidth)/gridVerticalSpace)+1; //amout of grind lines
     int offset; // painting grind offset
     for (int i=0;i<grindVerticalCount;i++)  // painting grind loop
     {
-        offset = (i*grindVerticalSpace)+frameWidth;
+        offset = (i*gridVerticalSpace)+frameWidth;
         painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
         if (file != 0)
             value.setNum((((offset-frameWidth+img_offset)*file->time()/maxFFToffset)/generator0->zoomFactor()),'f',3);
@@ -203,20 +207,20 @@ void Plot::paintEvent(QPaintEvent *)
         painter.drawText(offset,this->height()-AX_X_DESC_SPACE+frameWidth+15,value);
     }
     //Horizontal
-    int grindHorizontalCount = ((this->height()-AX_X_DESC_SPACE-frameWidth)/grindHorizontalSpace)+1;
+    int grindHorizontalCount = ((this->height()-AX_X_DESC_SPACE-frameWidth)/gridHorizontalSpace)+1;
     offset = this->height()-AX_X_DESC_SPACE-1;
     int frequencyGrindOffset =0; // frequensy per grind line
     // depends on img height so it have to check both img0 and img1 to protect dividing by 0
     if (file != 0 && img0 && !img0->isNull())
-        frequencyGrindOffset = grindHorizontalSpace*file->frequency()/img0->height();
+        frequencyGrindOffset = gridHorizontalSpace*file->frequency()/img0->height();
     if (file != 0 && img1 && !img1->isNull())
-        frequencyGrindOffset = grindHorizontalSpace*file->frequency()/img1->height();
+        frequencyGrindOffset = gridHorizontalSpace*file->frequency()/img1->height();
     for (int i=0;i<grindHorizontalCount;i++) // painting loop
     {
         painter.drawLine(frameWidth,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
         value.setNum(i*frequencyGrindOffset);
         painter.drawText(this->width()-AX_Y_DESC_SPACE+15,offset,value);
-        offset -= grindHorizontalSpace;
+        offset -= gridHorizontalSpace;
     }
 
     painter.end();
@@ -224,7 +228,7 @@ void Plot::paintEvent(QPaintEvent *)
 
 void Plot::refreshPlot()
 {
-    img_realWidth = this->width()-AX_Y_DESC_SPACE-frameWidth+generateImgBuffor;
+    img_realWidth = this->width()-AX_Y_DESC_SPACE-frameWidth+generateImgBuffer;
     //after resize set evrithing to 0
     img_nr = 0;
     img_offset = 0;
@@ -368,7 +372,7 @@ inline void Plot::moveGenerate()
     if(img_offset > img_offset_old) // if plot moved to left
     {
         // genereting NEXT img to img0 or img1 depends on curently painted
-        if(img_offset % img_realWidth > generateImgBuffor/2)
+        if(img_offset % img_realWidth > generateImgBuffer/2)
         {
             offset = (img_offset/img_realWidth)+1;
             if(offset != last_generated_offset)
@@ -381,7 +385,7 @@ inline void Plot::moveGenerate()
     else
     {
         // generating PREVIOUS img
-        if(img_offset%img_realWidth < generateImgBuffor/2)
+        if(img_offset%img_realWidth < generateImgBuffer/2)
         {
             int offset = (img_offset/img_realWidth)-1;
             if(offset < 0) offset =0;

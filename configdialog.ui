@@ -23,9 +23,51 @@
       <bool>false</bool>
      </property>
      <widget class="QListWidget" name="listWidget">
+      <property name="maximumSize">
+       <size>
+        <width>150</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="selectionBehavior">
+       <enum>QAbstractItemView::SelectRows</enum>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>32</width>
+        <height>32</height>
+       </size>
+      </property>
+      <property name="textElideMode">
+       <enum>Qt::ElideMiddle</enum>
+      </property>
+      <property name="gridSize">
+       <size>
+        <width>80</width>
+        <height>50</height>
+       </size>
+      </property>
+      <property name="viewMode">
+       <enum>QListView::IconMode</enum>
+      </property>
       <item>
        <property name="text">
         <string>Colors</string>
+       </property>
+       <property name="icon">
+        <iconset theme="applications-graphics">
+         <normaloff/>
+        </iconset>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Plot</string>
+       </property>
+       <property name="icon">
+        <iconset theme="preferences-desktop-screensaver">
+         <normaloff/>
+        </iconset>
        </property>
       </item>
      </widget>
@@ -38,7 +80,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>162</width>
+         <width>365</width>
          <height>282</height>
         </rect>
        </property>
