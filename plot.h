@@ -110,6 +110,7 @@ private:
     bool draggingEnabled; // true when mose left button is pressed
     int markerIndexdragging; // id curently dragging marker, -1 when dragging is disable
     int markerEdgedragging; //-1 when dragging whole marker, 0 when dragging left edge, 1 for right edge
+    int markerAdd; // 0 when left edge of marker is going to add , 1 for right edge , -1 when not adding anything
     virtual void mousePressEvent(QMouseEvent *);
     virtual void mouseReleaseEvent(QMouseEvent *);
     virtual void mouseMoveEvent(QMouseEvent *);

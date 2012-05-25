@@ -9,6 +9,7 @@ Plot::Plot(QWidget *parent) :
     img_offset = 0;
     draggingEnabled =0; // disable moving plot
     markerIndexdragging = -1; //disable dragging markers
+    markerAdd = -1;
     img0 = 0;
     img1 = 0;
     img_nr = 0;
@@ -53,9 +54,9 @@ void Plot::resetPlot()
     emit ImgOffset(img_offset);
 
     //resetting markers
-    markerIndexdragging = -1;
-    MarkerListUpdate(markerIndexdragging);
+    MarkerListUpdate(-1);
     markerList.clear();
+    markerIndexdragging = -1;
 }
 
 bool Plot::openFile(QString filePath)
@@ -174,8 +175,16 @@ void Plot::paintEvent(QPaintEvent *)
         if (i != markerIndexdragging) painter.drawRect(frameWidth+offsetFileToOffsetFFT(markerList[i].beginOffset())-img_offset,0,offsetFileToOffsetFFT(markerList[i].endOffset()-markerList[i].beginOffset()),this->height()-AX_X_DESC_SPACE);
     if (markerIndexdragging != -1 && markerIndexdragging <markerList.count())
     {
-        painter.setBrush(QColor(0,255,0,100));
-        painter.drawRect(frameWidth+offsetFileToOffsetFFT(markerList[markerIndexdragging].beginOffset())-img_offset,0,offsetFileToOffsetFFT(markerList[markerIndexdragging].endOffset()-markerList[markerIndexdragging].beginOffset()),this->height()-AX_X_DESC_SPACE);
+        if(markerAdd == -1)
+        {
+            painter.setBrush(QColor(0,255,0,100));
+            painter.drawRect(frameWidth+offsetFileToOffsetFFT(markerList[markerIndexdragging].beginOffset())-img_offset,0,offsetFileToOffsetFFT(markerList[markerIndexdragging].endOffset()-markerList[markerIndexdragging].beginOffset()),this->height()-AX_X_DESC_SPACE);
+        }
+        else
+        {
+            painter.setBrush(QColor(0,0,255,100));
+            painter.drawRect(frameWidth+offsetFileToOffsetFFT(markerList[markerIndexdragging].beginOffset())-img_offset-2,0,4,this->height()-AX_X_DESC_SPACE);
+        }
     }
 
     //axis background
@@ -294,6 +303,26 @@ void Plot::mousePressEvent(QMouseEvent *e)
                 markerEdgedragging = 1;
             }
         }
+    }
+    //adding new markers
+    if(markerAdd == 1)
+    {
+        markerList[markerIndexdragging].setBeginOffset(offsetFFTToOffsetFile(e->pos().x()+ img_offset));
+        markerAdd--; // = 0
+        this->update();
+    }
+    else if (markerAdd == 0)
+    {
+         int requested_offset = offsetFFTToOffsetFile(e->pos().x()+ img_offset);
+         if (requested_offset <= markerList[markerIndexdragging].beginOffset()) // end of offset need to be heighter then begining
+             return ; // if not return and do nothing
+         markerList[markerIndexdragging].setEndOffset(offsetFFTToOffsetFile(e->pos().x()+ img_offset));
+         markerAdd--; // = -1
+         markerList[markerIndexdragging].correctOffsets(file->bitsPerSample());
+         //qDebug() << "addMarker -- " <<  markerIndexdragging << markerList[markerIndexdragging].beginOffset() <<  markerList[markerIndexdragging].endOffset();
+         emit MarkerListUpdate(markerIndexdragging);
+         this->setCursor(Qt::ArrowCursor);
+         this->update();
     }
 }
 
@@ -426,14 +455,13 @@ void Plot::setZoom(float zoom)
 
 void Plot::addMarker()
 {
-    int begin = (this->width()-AX_Y_DESC_SPACE)/2 + img_offset - 0.1*this->width();
-    int end = begin + 0.2*this->width();
-    markerList.append(Markers(offsetFFTToOffsetFile(begin),offsetFFTToOffsetFile(end),"New",""));
-    markerIndexdragging = markerList.count() - 1;
-    markerList[markerIndexdragging].correctOffsets(file->bitsPerSample());
-    qDebug() << "addMarker -- " <<  markerList[markerIndexdragging].beginOffset() <<  markerList[markerIndexdragging].endOffset();
-    this->update();
-    emit MarkerListUpdate(markerIndexdragging);
+    if(markerAdd == -1) // if ther is not new marker adding in progres alredy
+    {
+        markerList.append(Markers(0,0,"New",""));
+        markerIndexdragging = markerList.count() - 1;
+        markerAdd = 1; //add marker
+        this->setCursor(Qt::CrossCursor);
+    }
 }
 
 void Plot::delMarker(int index)
