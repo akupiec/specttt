@@ -16,6 +16,8 @@
 #include "settings.h"
 #include "xml.h"
 
+#define DENSE 1
+
 class Settings;
 
 #define AX_X_DESC_SPACE 30
@@ -61,6 +63,12 @@ private slots:
     void addMarker(); // adding new marker to plot
 
 private:
+    // Useable width of plot
+    int plotWidth();
+    // Useable height of plot
+    int plotHeight();
+    quint16 halfFFTBufferSize;
+
     //Resetting all setting, should be called before opening new file
     void resetPlot();
 
@@ -100,7 +108,7 @@ private:
                               if (max_img_offset < 0) max_img_offset =0;}
     int max_img_offset; // and of imgae in pixels
     bool draggingEnabled; // true when mose left button is pressed
-    int markerIndexdragging; // id curently dragging or selected marker, -1 when dragging is disable
+    int markerIndexdragging; // id curently dragging marker, -1 when dragging is disable
     int markerEdgedragging; //-1 when dragging whole marker, 0 when dragging left edge, 1 for right edge
     virtual void mousePressEvent(QMouseEvent *);
     virtual void mouseReleaseEvent(QMouseEvent *);

@@ -135,6 +135,17 @@ void MainWindow::tableWidget_update(int index)
         ui->tableWidget->activateWindow(); // setting table active
         ui->tableWidget->selectRow(index); // selecting new row
     }
+    else
+    {
+        for (int i = 0;i<ui->tableWidget->rowCount();i++)
+        {
+            ui->tableWidget->clearSelection(); // clearing sellection (nessesery for removing row)
+            QTableWidgetItem *item = ui->tableWidget->item(0,0); // taking pointer of item to delete it
+            delete item;
+            ui->tableWidget->removeRow(0);
+        }
+        ui->tableWidget->setRowCount(0);
+    }
     ui->tableWidget->update(); // uptade table
 }
 
