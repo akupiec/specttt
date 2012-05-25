@@ -29,7 +29,7 @@ public:
     //Returning time length of file
     double time() const {return (double)file.header.data.descriptor.size / file.header.wave.byteRate; }
     //Returning max fileOffset
-    int maxOffset() const{return file.header.data.descriptor.size;}
+    int maxOffset() const{return file.header.data.descriptor.size/file.header.wave.numChannels;}
     //Returning amout bits per sample
     quint16 bitsPerSample() const{return file.header.wave.bitsPerSample;}
 
