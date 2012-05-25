@@ -34,7 +34,7 @@ void ConfigDialog::accept()
 {   // save settings when Ok button clicked
     colorsWidget->saveColors();
     plotWidget->saveSettings();
-    close();
+    QDialog::accept();
 }
 
 void ConfigDialog::setCurrentWidget(int idx)

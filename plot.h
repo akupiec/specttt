@@ -52,6 +52,9 @@ public:
     void selectMarker(int index){if (index < markerList.count()) markerIndexdragging = index; else markerIndexdragging = -1; this->update();}
     void delMarker(int index); // deleting specyfic marker
 
+    // reload configurable fields from settings and repaint
+    void reloadSettings();
+
 signals:
     void MaximumOffset(int); // emit max width of plot
     void ImgOffset(int); // emit curent position

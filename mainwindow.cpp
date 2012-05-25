@@ -62,7 +62,7 @@ void MainWindow::on_actionPreferences_triggered()
     ConfigDialog dialog(ui->plot->settings,this);
     if (dialog.exec() == QDialog::Accepted)
     {   // reload settings
-        ui->plot->openFile(ui->plot->file->fileName());
+        ui->plot->reloadSettings();
     }
 }
 

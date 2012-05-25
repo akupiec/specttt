@@ -1,6 +1,6 @@
 #include "plot.h"
 
-#define SPECT_PROJECT_NAME "Spect2.ini"
+#define SPECT_PROJECT_NAME "Spect2"
 
 Plot::Plot(QWidget *parent) :
     QWidget(parent)
@@ -15,12 +15,12 @@ Plot::Plot(QWidget *parent) :
     generator0 = 0;
     generator1 = 0;
     //config
-    settings = new Settings(QString(SPECT_PROJECT_NAME),QSettings::IniFormat,this);
-    frameWidth = settings->plotFrameWidth();
-    gridVerticalSpace = settings->plotGridVerticalSpacing();
-    gridHorizontalSpace = settings->plotGridHorizontalSpacing();
-    generateImgBuffer = settings->plotImageGeneratorBuffer();
-    imgZoom = settings->plotZoomX();
+#ifdef Q_OS_WIN32
+    settings = new Settings(QString(SPECT_PROJECT_NAME).append(".ini"),QSettings::IniFormat,this);
+#else
+    settings = new Settings(QString(SPECT_PROJECT_NAME),QSettings::NativeFormat,this);
+#endif
+    reloadSettings();
 }
 
 Plot::~Plot()
@@ -199,9 +199,9 @@ void Plot::paintEvent(QPaintEvent *)
     //Veritical
     painter.setPen(QPen(QBrush(Qt::white),1,Qt::DotLine));
     QString value;
-    int grindVerticalCount = ((this->width()-AX_Y_DESC_SPACE-frameWidth)/gridVerticalSpace)+1; //amout of grind lines
+    int gridVerticalCount = ((this->width()-AX_Y_DESC_SPACE-frameWidth)/gridVerticalSpace)+1; //amout of grind lines
     int offset; // painting grind offset
-    for (int i=0;i<grindVerticalCount;i++)  // painting grind loop
+    for (int i=0;i<gridVerticalCount;i++)  // painting grind loop
     {
         offset = (i*gridVerticalSpace)+frameWidth;
         painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
@@ -212,7 +212,7 @@ void Plot::paintEvent(QPaintEvent *)
         painter.drawText(offset,this->height()-AX_X_DESC_SPACE+frameWidth+15,value);
     }
     //Horizontal
-    int grindHorizontalCount = ((this->height()-AX_X_DESC_SPACE-frameWidth)/gridHorizontalSpace)+1;
+    int gridHorizontalCount = ((this->height()-AX_X_DESC_SPACE-frameWidth)/gridHorizontalSpace)+1;
     offset = this->height()-AX_X_DESC_SPACE-1;
     int frequencyGrindOffset =0; // frequensy per grind line
     // depends on img height so it have to check both img0 and img1 to protect dividing by 0
@@ -220,7 +220,7 @@ void Plot::paintEvent(QPaintEvent *)
         frequencyGrindOffset = gridHorizontalSpace*file->frequency()/img0->height();
     if (file != 0 && img1 && !img1->isNull())
         frequencyGrindOffset = gridHorizontalSpace*file->frequency()/img1->height();
-    for (int i=0;i<grindHorizontalCount;i++) // painting loop
+    for (int i=0;i<gridHorizontalCount;i++) // painting loop
     {
         painter.drawLine(frameWidth,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
         value.setNum(i*frequencyGrindOffset);
@@ -424,6 +424,8 @@ void Plot::splitFile()
 void Plot::setZoom(float zoom)
 {
     imgZoom = zoom;
+    if (!generator0)
+        return;
     qDebug() << "Plot::setZoom (in status bar) -- waiting until generation finished";
     while(!generator0->isFinished() && !generator1->isFinished());
     generator0->setZoomFactorX(zoom);
@@ -457,4 +459,13 @@ int Plot::plotWidth()
 int Plot::plotHeight()
 {
     return this->height() - AX_X_DESC_SPACE - 2*frameWidth;
+}
+
+void Plot::reloadSettings()
+{
+    frameWidth = settings->plotFrameWidth();
+    gridVerticalSpace = settings->plotGridVerticalSpacing();
+    gridHorizontalSpace = settings->plotGridHorizontalSpacing();
+    generateImgBuffer = settings->plotImageGeneratorBuffer();
+    setZoom(settings->plotZoomX());
 }
