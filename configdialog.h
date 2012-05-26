@@ -8,6 +8,7 @@ class ConfigDialog;
 }
 class ColorsWidget;
 class PlotWidget;
+class FFTWidget;
 class Settings;
 
 class ConfigDialog : public QDialog
@@ -17,6 +18,7 @@ class ConfigDialog : public QDialog
 public:
     explicit ConfigDialog(Settings *s, QWidget *parent = 0);
     ~ConfigDialog();
+    static bool reloadFile() { return fileSettingsChanged; }
 
 public slots:
     void accept();
@@ -26,7 +28,10 @@ private:
     Ui::ConfigDialog *ui;
     ColorsWidget *colorsWidget;
     PlotWidget *plotWidget;
+    FFTWidget *fftWidget;
     QWidgetList widgetList;
+    Settings *settings;
+    static bool fileSettingsChanged;
 };
 
 #endif // CONFIGDIALOG_H

@@ -4,6 +4,7 @@
 #include <QSettings>
 #include <QVector>
 #include <QColor>
+#include "fft.h"
 
 class Settings : public QSettings
 {
@@ -18,6 +19,10 @@ public:
     // plot
     void readPlotSettings();
     void savePlotSettings();
+    // FFT
+    void readFFTSettings();
+    void saveFFTSettings();
+    // fields access
     int plotFrameWidth() const { return frameWidth; }
     void setPlotFrameWidth(int v) { frameWidth = v; }
     int plotGridVerticalSpacing() const { return gridVerticalSpace; }
@@ -28,6 +33,10 @@ public:
     void setPlotImageGeneratorBuffer(int v) { generateImgBuffer = v; }
     float plotZoomX() const { return imgZoom; }
     void setPlotZoomX(float v) { imgZoom = v; }
+    quint16 FFT_bufferSize() const { return bufferSize; }
+    void setFFT_bufferSize(quint16 v) { bufferSize = v; }
+    FFT::Window FFT_window() const { return windowFFT; }
+    void setFFT_window(FFT::Window v) { windowFFT = v; }
 
 private:
     void init();
@@ -39,6 +48,9 @@ private:
     int gridHorizontalSpace;
     int generateImgBuffer;
     float imgZoom;
+    // FFT
+    quint16 bufferSize;
+    FFT::Window windowFFT;
 
 signals:
 

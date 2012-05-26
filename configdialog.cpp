@@ -3,11 +3,15 @@
 #include "settings.h"
 #include "config/colorswidget.h"
 #include "config/plotwidget.h"
+#include "config/fftwidget.h"
+
+bool ConfigDialog::fileSettingsChanged = false;
 
 ConfigDialog::ConfigDialog(Settings *s, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::ConfigDialog)
 {
+    settings = s;
     ui->setupUi(this);
     QList<int> sizes;
     const int listWidgetWidth = 70;
@@ -17,7 +21,9 @@ ConfigDialog::ConfigDialog(Settings *s, QWidget *parent) :
     ui->scrollAreaWidgetContents->layout()->addWidget(colorsWidget);
     plotWidget = new PlotWidget(s,this);
     ui->scrollAreaWidgetContents->layout()->addWidget(plotWidget);
-    widgetList << colorsWidget << plotWidget;
+    fftWidget = new FFTWidget(s,this);
+    ui->scrollAreaWidgetContents->layout()->addWidget(fftWidget);
+    widgetList << colorsWidget << plotWidget << fftWidget;
     foreach (QWidget *widget, widgetList)
         widget->hide();
     connect(ui->listWidget, SIGNAL(currentRowChanged(int)), SLOT(setCurrentWidget(int)));
@@ -27,13 +33,18 @@ ConfigDialog::ConfigDialog(Settings *s, QWidget *parent) :
 ConfigDialog::~ConfigDialog()
 {
     delete ui;
-    delete colorsWidget;
+    foreach (QWidget *widget, widgetList)
+        delete widget;
 }
 
 void ConfigDialog::accept()
 {   // save settings when Ok button clicked
     colorsWidget->saveColors();
     plotWidget->saveSettings();
+    quint16 bufferSize = settings->FFT_bufferSize();
+    int window = settings->FFT_window();
+    fftWidget->saveSettings();
+    fileSettingsChanged = bool(bufferSize != settings->FFT_bufferSize() || window != settings->FFT_window());
     QDialog::accept();
 }
 

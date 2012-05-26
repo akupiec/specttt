@@ -14,6 +14,7 @@ Settings::~Settings()
 {
     saveColors();
     savePlotSettings();
+    saveFFTSettings();
 }
 
 void Settings::init()
@@ -21,6 +22,7 @@ void Settings::init()
     rgbVector.resize(256);
     setColors();
     readPlotSettings();
+    readFFTSettings();
 }
 
 void Settings::setColors()
@@ -68,5 +70,21 @@ void Settings::savePlotSettings()
     setValue("gridHorizontalSpace", gridHorizontalSpace);
     setValue("imageGeneratorBuffer", generateImgBuffer);
     setValue("zoomX", imgZoom);
+    endGroup();
+}
+
+void Settings::readFFTSettings()
+{
+    beginGroup("FFT");
+    bufferSize = value("bufferSize", 512).toInt();
+    windowFFT = static_cast<FFT::Window> (value("window", static_cast<int> (FFT::Hann)).toInt());
+    endGroup();
+}
+
+void Settings::saveFFTSettings()
+{
+    beginGroup("FFT");
+    setValue("bufferSize", bufferSize);
+    setValue("window", static_cast<int> (windowFFT));
     endGroup();
 }

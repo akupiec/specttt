@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 
+using namespace FFT;
+
 FFT::FFT::FFT(uint16 bufferSize, Window windowType) {
     bufferFFT = bufferSize;
     windowFFT = windowType;

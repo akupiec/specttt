@@ -1,6 +1,14 @@
 #include "plot.h"
 
-#define SPECT_PROJECT_NAME "Spect2"
+#ifdef Q_OS_WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
+
+#include <QDebug>
+
+#define SPECT_PROJECT_NAME "Spect2.ini"
 
 Plot::Plot(QWidget *parent) :
     QWidget(parent)
@@ -15,11 +23,7 @@ Plot::Plot(QWidget *parent) :
     generator0 = 0;
     generator1 = 0;
     //config
-#ifdef Q_OS_WIN32
-    settings = new Settings(QString(SPECT_PROJECT_NAME).append(".ini"),QSettings::IniFormat,this);
-#else
-    settings = new Settings(QString(SPECT_PROJECT_NAME),QSettings::NativeFormat,this);
-#endif
+    settings = new Settings(QString(SPECT_PROJECT_NAME),QSettings::IniFormat,this);
     reloadSettings();
 }
 
@@ -48,12 +52,26 @@ void Plot::resetPlot()
 
     //destroing all objects
     delete file; file = 0;
+    qDebug() << "resetPlot(): Images deleted. Deleting generators...";
+    while (generator0 && generator0->isRunning())
+#ifdef Q_OS_WIN32
+        Sleep(6);
+#else
+        usleep(6000);
+#endif
+    delete generator0; generator0 = 0;
+    while (generator1 && generator1->isRunning())
+#ifdef Q_OS_WIN32
+        Sleep(6);
+#else
+        usleep(6000);
+#endif
+    delete generator1; generator1 = 0;
+    qDebug() << "resetPlot(): Generators deleted.";
     delete img0; img0 = 0;
     delete img1; img1 = 0;
-    delete generator0; generator0 = 0;
-    delete generator1; generator1 = 0;
-    delete settings; settings = 0;
-    delete xml; xml =0;
+//    delete settings; settings = 0;
+//    delete xml; xml =0;
 
     //resetting mouse confing
     img_offset = 0;
@@ -69,8 +87,13 @@ void Plot::resetPlot()
 bool Plot::openFile(QString filePath)
 {
     if (file) // if file already exist
+    {
         resetPlot(); // reset all settings
-    FFT::FFT fft;
+        delete file;
+    }
+    FFT::FFT fft(settings->FFT_bufferSize(), settings->FFT_window());
+    qDebug() << "Plot::openFile: FFT object created";
+    qDebug() << "Plot::openFile: FFT buffer size:" << fft.bufferSize();
     double *buffer = new double [fft.bufferSize()]; //FFT
     //setting temp file
     tempFile.setAutoRemove(false);
@@ -83,19 +106,21 @@ bool Plot::openFile(QString filePath)
     tempStream.setVersion(12);
 
     //wave file
+    qDebug() << "Plot::openFile: opening wave file...";
     file = new WaveFile(filePath);
     xml = new Xml(file->fileName());
 
     halfFFTBufferSize = fft.bufferSize() / 2; //quint half of buffer fft
     quint16 FFTBufferGraduation = halfFFTBufferSize / DENSE; // lenght of graduation depended of densing degree
     maxFFToffset = 2 * (int(double(file->samples()) / FFTBufferGraduation + 1.) - 1); //amout of fft samples in file
+    int tempFileWindowFFT;
     quint16 tempFileHeight = 0;
     int tempFileWidth = 0;
     if (QFile::exists(tempFilePath) && tempFile.size() > halfFFTBufferSize)
-        tempStream >> tempFileHeight >> tempFileWidth; //reading header form file
+        tempStream >> tempFileHeight >> tempFileWidth >> tempFileWindowFFT; //reading header form file
     else
         qDebug() << "Plot::openFile -- temp file read error or file not exists";
-    if (halfFFTBufferSize != tempFileHeight || maxFFToffset != tempFileWidth) // checking if temp file need to be regenerated
+    if (halfFFTBufferSize != tempFileHeight || maxFFToffset != tempFileWidth || static_cast<int> (fft.windowType()) != tempFileWindowFFT) // checking if temp file need to be regenerated
     {
         qDebug() << "Plot::openFile -- generating new FFT this may take a while, please wait...";
         if (!tempFile.remove()) //removing old temp file
@@ -104,7 +129,7 @@ bool Plot::openFile(QString filePath)
         if (!tempFile.open() || !tempFile.seek(0)) //creating new one
             return false;
         tempStream.setDevice(&tempFile);
-        tempStream << halfFFTBufferSize << maxFFToffset; // saving new header to temp file
+        tempStream << halfFFTBufferSize << maxFFToffset << static_cast<int> (fft.windowType()); // saving new header to temp file
         for (int i=0; i<maxFFToffset; i++) //lenght of file loop
         {
             file->readData(buffer,fft.bufferSize(),i*FFTBufferGraduation,0);

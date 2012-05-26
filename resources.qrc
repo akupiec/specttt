@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>config/fft.png</file>
+    </qresource>
+</RCC>

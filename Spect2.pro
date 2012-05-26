@@ -21,7 +21,8 @@ SOURCES += main.cpp\
     config/colorswidget.cpp \
     xml.cpp \
     configdialog.cpp \
-    config/plotwidget.cpp
+    config/plotwidget.cpp \
+    config/fftwidget.cpp
 
 HEADERS  += mainwindow.h \
     wavefile.h \
@@ -34,12 +35,17 @@ HEADERS  += mainwindow.h \
     config/colorswidget.h \
     xml.h \
     configdialog.h \
-    config/plotwidget.h
+    config/plotwidget.h \
+    config/fftwidget.h
 
 FORMS    += mainwindow.ui \
     config/colorswidget.ui \
     configdialog.ui \
-    config/plotwidget.ui
+    config/plotwidget.ui \
+    config/fftwidget.ui
 
 OTHER_FILES += \
     TODO
+
+RESOURCES += \
+    resources.qrc

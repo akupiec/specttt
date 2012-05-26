@@ -70,6 +70,15 @@
         </iconset>
        </property>
       </item>
+      <item>
+       <property name="text">
+        <string>FFT</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/icons/config/fft.png</normaloff>:/icons/config/fft.png</iconset>
+       </property>
+      </item>
      </widget>
      <widget class="QScrollArea" name="scrollArea">
       <property name="widgetResizable">
@@ -101,7 +110,9 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>
