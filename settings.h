@@ -37,6 +37,8 @@ public:
     void setFFT_bufferSize(quint16 v) { bufferSize = v; }
     FFT::Window FFT_window() const { return windowFFT; }
     void setFFT_window(FFT::Window v) { windowFFT = v; }
+    int FFT_dense() const { return denseFFT; }
+    void setFFT_dense(int v) { denseFFT = v; }
 
 private:
     void init();
@@ -51,6 +53,7 @@ private:
     // FFT
     quint16 bufferSize;
     FFT::Window windowFFT;
+    int denseFFT;
 
 signals:
 

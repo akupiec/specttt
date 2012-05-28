@@ -78,6 +78,7 @@ void Settings::readFFTSettings()
     beginGroup("FFT");
     bufferSize = value("bufferSize", 512).toInt();
     windowFFT = static_cast<FFT::Window> (value("window", static_cast<int> (FFT::Hann)).toInt());
+    denseFFT = value("dense", 1).toInt();
     endGroup();
 }
 
@@ -86,5 +87,6 @@ void Settings::saveFFTSettings()
     beginGroup("FFT");
     setValue("bufferSize", bufferSize);
     setValue("window", static_cast<int> (windowFFT));
+    setValue("dense", denseFFT);
     endGroup();
 }

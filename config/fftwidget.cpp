@@ -12,6 +12,7 @@ FFTWidget::FFTWidget(Settings *s, QWidget *parent) :
     oldBufferSize = s->FFT_bufferSize();
     ui->bufferSizeSpinBox->setValue(oldBufferSize);
     ui->windowComboBox->setCurrentIndex(s->FFT_window());
+    ui->denseSpinBox->setValue(s->FFT_dense());
 }
 
 FFTWidget::~FFTWidget()
@@ -34,4 +35,5 @@ void FFTWidget::saveSettings()
 {
     settings->setFFT_bufferSize( ui->bufferSizeSpinBox->value() );
     settings->setFFT_window( static_cast<FFT::Window> (ui->windowComboBox->currentIndex()) );
+    settings->setFFT_dense( ui->denseSpinBox->value() );
 }

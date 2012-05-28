@@ -16,8 +16,6 @@
 #include "settings.h"
 #include "xml.h"
 
-#define DENSE 1
-
 class Settings;
 
 #define AX_X_DESC_SPACE 30
@@ -53,7 +51,7 @@ public:
     void delMarker(int index); // deleting specyfic marker
 
     // reload configurable fields from settings and repaint
-    void reloadSettings();
+    void loadSettings();
 
 signals:
     void MaximumOffset(int); // emit max width of plot
@@ -102,6 +100,7 @@ private:
     int gridVerticalSpace;
     int gridHorizontalSpace;
     int generateImgBuffer; // have to be calculated how much extra ram is needed for it (at 20000 is using extra ~280-380 Mb)
+    int dense;
 
     //moving
     int img_offset; // the same as FFT_offset

@@ -43,8 +43,9 @@ void ConfigDialog::accept()
     plotWidget->saveSettings();
     quint16 bufferSize = settings->FFT_bufferSize();
     int window = settings->FFT_window();
+    int dense = settings->FFT_dense();
     fftWidget->saveSettings();
-    fileSettingsChanged = bool(bufferSize != settings->FFT_bufferSize() || window != settings->FFT_window());
+    fileSettingsChanged = bool(bufferSize != settings->FFT_bufferSize() || window != settings->FFT_window() || dense != settings->FFT_dense());
     QDialog::accept();
 }
 

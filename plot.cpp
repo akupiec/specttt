@@ -24,7 +24,7 @@ Plot::Plot(QWidget *parent) :
     generator1 = 0;
     //config
     settings = new Settings(QString(SPECT_PROJECT_NAME),QSettings::IniFormat,this);
-    reloadSettings();
+    loadSettings();
 }
 
 Plot::~Plot()
@@ -111,7 +111,7 @@ bool Plot::openFile(QString filePath)
     xml = new Xml(file->fileName());
 
     halfFFTBufferSize = fft.bufferSize() / 2; //quint half of buffer fft
-    quint16 FFTBufferGraduation = halfFFTBufferSize / DENSE; // lenght of graduation depended of densing degree
+    quint16 FFTBufferGraduation = halfFFTBufferSize / dense; // lenght of graduation depended of densing degree
     maxFFToffset = 2 * (int(double(file->samples()) / FFTBufferGraduation + 1.) - 1); //amout of fft samples in file
     int tempFileWindowFFT;
     quint16 tempFileHeight = 0;
@@ -486,11 +486,12 @@ int Plot::plotHeight()
     return this->height() - AX_X_DESC_SPACE - 2*frameWidth;
 }
 
-void Plot::reloadSettings()
+void Plot::loadSettings()
 {
     frameWidth = settings->plotFrameWidth();
     gridVerticalSpace = settings->plotGridVerticalSpacing();
     gridHorizontalSpace = settings->plotGridHorizontalSpacing();
     generateImgBuffer = settings->plotImageGeneratorBuffer();
     setZoom(settings->plotZoomX());
+    dense = settings->FFT_dense();
 }
