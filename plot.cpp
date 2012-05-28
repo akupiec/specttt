@@ -119,8 +119,10 @@ bool Plot::openFile(QString filePath)
     generator1 = new ImageGenerator(file, &tempFile, settings->colors(), this);
     generator0->setZoomFactorX(imgZoom);
     generator1->setZoomFactorX(imgZoom);
-    connect(generator0, SIGNAL(finished()), this, SLOT(imageGenerated()));
-    connect(generator1, SIGNAL(finished()), this, SLOT(imageGenerated()));
+    connect(generator0, SIGNAL(finished()), this, SLOT(update()));
+    //connect(generator0, SIGNAL(finished()), this, SLOT(imageGenerated()));
+    connect(generator1, SIGNAL(finished()),this,SLOT(update()));
+    //connect(generator1, SIGNAL(finished()), this, SLOT(imageGenerated()));
 
     img_nr = 0;    
     setMaxImgOffset();
@@ -131,6 +133,10 @@ bool Plot::openFile(QString filePath)
 
 void Plot::imageGenerated()
 {
+    if(generator0->isFinished() && generator1->isFinished())
+        qDebug() << "TO JEST SKUKCES";
+    else
+        qDebug() << "___";
     this->update();
 }
 
@@ -227,11 +233,47 @@ void Plot::paintEvent(QPaintEvent *)
 void Plot::refreshPlot()
 {
     img_realWidth = this->width()-AX_Y_DESC_SPACE-frameWidth+generateImgBuffor;
-    //after resize set evrithing to 0
-    img_nr = 0;
-    img_offset = 0;
-    if(generator0 && generator0->isFinished())
-        generate(img_nr,0);
+
+    //waitnig ultil generations are finished
+    while(generator0 && generator0->isRunning()) continue;
+    while(generator1 && generator1->isRunning()) continue;
+
+    // changing curentyly painting
+    last_generated_offset = -1;
+    if((img_offset/img_realWidth)%2 == 0  && img_offset > 0)
+        img_nr = 0;
+    else
+        img_nr = 1;
+    if(img_offset == 0) img_nr = 0;
+
+    int offset;
+    //genereate curentyly painting img
+    generate(img_nr,img_offset/img_realWidth);
+
+    while(generator0 && generator0->isRunning()) continue; //check again need to be finished before generating next img
+    // genereting NEXT img to img0 or img1 depends on curently painted
+    if(img_offset % img_realWidth > generateImgBuffor/2)
+    {
+        offset = (img_offset/img_realWidth)+1;
+        if(offset != last_generated_offset)
+        {
+            //qDebug() << "generacja do przodu: " << offset <<", w:"<< !img_nr << "gdzie jest:" << offset-1 << img_nr;
+            generate(!img_nr,offset);
+        }
+    }
+
+    // generating PREVIOUS img
+    else
+    {
+        int offset = (img_offset/img_realWidth)-1;
+        if(offset < 0) offset =0;
+        if(offset != last_generated_offset)
+        {
+           // qDebug() << "generacja wsteczna: " << offset <<", w:"<< !img_nr << "gdzie jest:" << offset+1 << img_nr;
+            generate(!img_nr,offset);
+        }
+    }
+
     //emitning new parametrs
     setMaxImgOffset();
     emit MaximumOffset(max_img_offset);
@@ -377,7 +419,7 @@ inline void Plot::moveGenerate()
             offset = (img_offset/img_realWidth)+1;
             if(offset != last_generated_offset)
             {
-                //qDebug() << "generacja do przodu: " << offset <<", w:"<< !img_nr << "gdzie jest:" << offset-1 << img_nr;
+                //qDebug() << " generacja do przodu: " << offset <<", w:"<< !img_nr << "gdzie jest:" << offset-1 << img_nr;
                 generate(!img_nr,offset);
             }
         }
@@ -416,7 +458,10 @@ void Plot::splitFile()
 
 void Plot::setZoom(float zoom)
 {
+    img_offset = offsetFFTToOffsetFile(img_offset);
     imgZoom = zoom;
+    img_offset = offsetFileToOffsetFFT(img_offset);
+
     qDebug() << "Plot::setZoom (in status bar) -- waiting until generation finished";
     while(!generator0->isFinished() && !generator1->isFinished());
     generator0->setZoomFactorX(zoom);

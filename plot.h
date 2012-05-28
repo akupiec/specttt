@@ -74,8 +74,8 @@ private:
 
     //FFTFile
     int maxFFToffset;
-    int offsetFileToOffsetFFT(quint32 offset) {return (offset*maxFFToffset/(double)file->maxOffset())*imgZoom;}
-    quint32 offsetFFTToOffsetFile(int offset) {return (offset/imgZoom)*file->maxOffset()/maxFFToffset;}
+    int offsetFileToOffsetFFT(quint32 offset) {return (offset*imgZoom) *((double)maxFFToffset/file->maxOffset());}
+    quint32 offsetFFTToOffsetFile(int offset) {return (offset/imgZoom) *(file->maxOffset()/maxFFToffset);}
 
     //Painting
     virtual void paintEvent(QPaintEvent *);
