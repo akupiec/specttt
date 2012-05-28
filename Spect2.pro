@@ -18,7 +18,8 @@ SOURCES += main.cpp\
     markers.cpp \
     imagegenerator.cpp \
     settings.cpp \
-    xml.cpp
+    xml.cpp \
+    tempfilegenerator.cpp
 
 HEADERS  += mainwindow.h \
     wavefile.h \
@@ -28,7 +29,8 @@ HEADERS  += mainwindow.h \
     imagegenerator.h \
     cyclicqueue.h \
     settings.h \
-    xml.h
+    xml.h \
+    tempfilegenerator.h
 
 FORMS    += mainwindow.ui \
     config.ui

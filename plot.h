@@ -83,7 +83,7 @@ private:
     // img plotis in memory
     QImage *img0;
     QImage *img1;
-    int img_realWidth; //width of img without rounding error    
+    int img_realWidth; //width of img without rounding error
 
     //generating
     ImageGenerator *generator0; //pointer to thread class
