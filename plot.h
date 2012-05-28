@@ -57,6 +57,10 @@ signals:
     void ImgOffset(int); // emit curent position
     void MarkerListUpdate(int); //emit curently selected index and refreshing ui table of markers
 
+public slots:
+    void saveXml();
+    void loadXml();
+
 private slots:
     void setImgOffset(int); // connected to horizontal scroll bar for setting imr_offset
     void imageGenerated(); // finished generation of new img
@@ -83,7 +87,7 @@ private:
     // img plotis in memory
     QImage *img0;
     QImage *img1;
-    int img_realWidth; //width of img without rounding error    
+    int img_realWidth; //width of img without rounding error
 
     //generating
     ImageGenerator *generator0; //pointer to thread class

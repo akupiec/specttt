@@ -6,12 +6,14 @@
 #include<QFile>
 #include"markers.h"
 
-class Xml
+class Xml : public QObject
 {
+    Q_OBJECT
 public:
-    Xml(QString name) {fileName = name;}
+    Xml(QString name, QObject *parent = 0) : QObject(parent) {fileName = name;}
     void saveMarkers(QVector<Markers> *markers);
     void loadMarkers(QVector<Markers> *markers);
+
 private:
     QString fileName;
 };

@@ -14,7 +14,7 @@ Plot::Plot(QWidget *parent) :
     img_nr = 0;
     generator0 = 0;
     generator1 = 0;
-    //config   
+    //config
     imgZoom =1;
 }
 
@@ -122,7 +122,7 @@ bool Plot::openFile(QString filePath)
     connect(generator0, SIGNAL(finished()), this, SLOT(imageGenerated()));
     connect(generator1, SIGNAL(finished()), this, SLOT(imageGenerated()));
 
-    img_nr = 0;    
+    img_nr = 0;
     setMaxImgOffset();
     emit MaximumOffset(max_img_offset);
     generate(img_nr,0);
@@ -450,4 +450,16 @@ int Plot::plotWidth()
 int Plot::plotHeight()
 {
     return this->height() - AX_X_DESC_SPACE - 2*frameWidth;
+}
+
+void Plot::saveXml()
+{
+    if (xml)
+        xml->saveMarkers(&markerList);
+}
+
+void Plot::loadXml()
+{
+    if (xml)
+        xml->loadMarkers(&markerList);
 }
