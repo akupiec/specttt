@@ -164,3 +164,20 @@ void MainWindow::on_buttonMarkerDelete_clicked()
     ui->plot->delMarker(index); // deleting selected row form Marker List Vector
     ui->plot->selectMarker(ui->tableWidget->currentRow()); // selecting next marker and refreshing plot
 }
+
+void MainWindow::closeEvent(QCloseEvent *)
+{
+    if (ui->plot->settings->clearTempDir())
+    {
+        QDir dir = QDir::temp();
+        QStringList files = dir.entryList(QStringList("*.fft"),QDir::Files);
+        if (files.isEmpty())
+            return;
+        qDebug() << "Deleting temporary files...";
+        foreach (QString fileName, files)
+        {
+            if (QFile::remove(dir.absolutePath() + QDir::separator() + fileName))
+                qDebug() << fileName << "deleted";
+        }
+    }
+}

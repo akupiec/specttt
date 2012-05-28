@@ -9,6 +9,7 @@ FFTWidget::FFTWidget(Settings *s, QWidget *parent) :
 {
     ui->setupUi(this);
     settings = s;
+    ui->clearTempCheckBox->setChecked(s->clearTempDir());
     oldBufferSize = s->FFT_bufferSize();
     ui->bufferSizeSpinBox->setValue(oldBufferSize);
     ui->windowComboBox->setCurrentIndex(s->FFT_window());
@@ -33,6 +34,7 @@ void FFTWidget::on_bufferSizeSpinBox_valueChanged(int v)
 
 void FFTWidget::saveSettings()
 {
+    settings->setClearTempDir( ui->clearTempCheckBox->isChecked() );
     settings->setFFT_bufferSize( ui->bufferSizeSpinBox->value() );
     settings->setFFT_window( static_cast<FFT::Window> (ui->windowComboBox->currentIndex()) );
     settings->setFFT_dense( ui->denseSpinBox->value() );

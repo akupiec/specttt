@@ -33,6 +33,8 @@ public:
     void setPlotImageGeneratorBuffer(int v) { generateImgBuffer = v; }
     float plotZoomX() const { return imgZoom; }
     void setPlotZoomX(float v) { imgZoom = v; }
+    bool clearTempDir() const { return clearTmp; }
+    void setClearTempDir(bool v) { clearTmp = v; }
     quint16 FFT_bufferSize() const { return bufferSize; }
     void setFFT_bufferSize(quint16 v) { bufferSize = v; }
     FFT::Window FFT_window() const { return windowFFT; }
@@ -51,6 +53,7 @@ private:
     int generateImgBuffer;
     float imgZoom;
     // FFT
+    bool clearTmp;
     quint16 bufferSize;
     FFT::Window windowFFT;
     int denseFFT;
