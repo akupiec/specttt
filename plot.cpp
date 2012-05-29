@@ -9,9 +9,11 @@ void msleep(uint ms) { Sleep(ms); }
 void msleep(uint ms) { usleep(1000*ms); }
 #endif
 
+#include <QDialog>
 #include <QVBoxLayout>
 #include <QProgressBar>
 #include <QLabel>
+#include <QTime>
 
 #define SPECT_PROJECT_NAME "Spect2.ini"
 
@@ -27,6 +29,7 @@ Plot::Plot(QWidget *parent) :
     img_nr = 0;
     generator0 = 0;
     generator1 = 0;
+    plotReadyToPaint = true;
     //config
     imgZoom =1;
 }
@@ -84,14 +87,14 @@ bool Plot::openFile(QString filePath)
     if (!tempFile.open() || !tempFile.seek(0))
         return false;
     QDataStream tempStream(&tempFile);
-    tempStream.setVersion(12);
+    tempStream.setVersion(QDataStream::Qt_4_6);
 
     //wave file
     file = new WaveFile(filePath);
     xml = new Xml(file->fileName());
     settings = new Settings(QString(SPECT_PROJECT_NAME),QSettings::IniFormat,this);
 
-    halfFFTBufferSize = fft.bufferSize() / 2; //quint half of buffer fft
+    halfFFTBufferSize = 256; //quint half of buffer fft
     quint16 FFTBufferGraduation = halfFFTBufferSize / DENSE; // lenght of graduation depended of densing degree
     maxFFToffset = 2 * (int(double(file->samples()) / FFTBufferGraduation + 1.) - 1); //amout of fft samples in file
     quint16 tempFileHeight = 0;
@@ -102,6 +105,7 @@ bool Plot::openFile(QString filePath)
         qDebug() << "Plot::openFile -- temp file read error or file not exists";
     if (halfFFTBufferSize != tempFileHeight || maxFFToffset != tempFileWidth) // checking if temp file need to be regenerated
     {
+        plotReadyToPaint = false;
         qDebug() << "Plot::openFile -- generating new FFT this may take a while, please wait...";
         if (!tempFile.remove()) //removing old temp file
             return false;
@@ -110,40 +114,65 @@ bool Plot::openFile(QString filePath)
             return false;
         tempStream.setDevice(&tempFile);
         tempStream << halfFFTBufferSize << maxFFToffset; // saving new header to temp file
-        // start work loop in new thread and show progress bar window...
-        TempFileGenerator *tempFileGenerator = new TempFileGenerator(file,&tempStream,&fft,halfFFTBufferSize,FFTBufferGraduation,maxFFToffset,this);
-        tempFileGenerator->start();
-        QWidget *progressWindow = new QWidget(this,Qt::Window);
+        progressWindow = new QWidget(this,Qt::Window);
         QVBoxLayout *progressLayout = new QVBoxLayout(progressWindow);
         progressWindow->setLayout(progressLayout);
-        QProgressBar *progressBar = new QProgressBar(progressWindow);
+        progressBar = new QProgressBar(progressWindow);
         progressBar->setRange(0,maxFFToffset);
         progressBar->setValue(0);
         progressLayout->addWidget(progressBar);
-        QLabel *label = new QLabel(progressWindow);
-        progressLayout->addWidget(label);
+        progressLabel = new QLabel(progressWindow);
+        progressLayout->addWidget(progressLabel);
+        qDebug() << "show";
         progressWindow->show();
-        const QString eta = tr("Estimated time of arrival: ");
-        const QString sec = tr(" seconds.");
-        int oldOffset = 0;
-        msleep(100);
-        while (tempFileGenerator->isRunning())
-        {
-            int offset = tempFileGenerator->currentFileOffset();
-            progressBar->setValue(offset);
-            label->setText(eta + QString::number((maxFFToffset-offset)/(10*(offset-oldOffset))) + sec);
-            oldOffset = offset;
-            msleep(100);
-        }
-        progressBar->setValue(maxFFToffset);
-        progressWindow->close();
-        delete label;
-        delete progressBar;
-        delete progressLayout;
-        delete progressWindow;
+        qDebug() << "FFT counting...";
+        // start work loop in new thread and show progress bar window...
+        TempFileGenerator *tempFileGenerator = new TempFileGenerator(file,&tempFile,halfFFTBufferSize,FFT::Hann,FFTBufferGraduation,maxFFToffset,this);
+        connect(tempFileGenerator, SIGNAL(currentOffsetChanged(int)), this, SLOT(setProgressFFT(int)));
+        connect(tempFileGenerator, SIGNAL(finished()), this, SLOT(finishedCountingFFT()));
+        tempFileGenerator->start();
     }
     else
+    {
         qDebug() << "Plot::openFile -- reading from temp file" << tempFile.fileName();
+        finishedCountingFFT();
+    }
+
+    return true;
+}
+
+void Plot::setProgressFFT(int v)
+{
+    static const QString eta = tr("Estimated time of arrival: ");
+    static const QString sec = tr(" seconds.");
+    static int oldOffset = 0;
+    static QTime time;
+    if (v == 0)
+    {
+        oldOffset = 0;
+        time.start();
+        return;
+    }
+    progressBar->setValue(v);
+    if (time.elapsed() >= 100)
+    {
+//        qDebug() << "set progress" << v << "/" << progressBar->maximum() << " \t  ETA:" << (maxFFToffset-v)/(5000*(v-oldOffset)) << "seconds";
+        progressLabel->setText(eta + QString::number((maxFFToffset-v)/(5000*(v-oldOffset))) + sec);
+        time.restart();
+    }
+    oldOffset = v;
+}
+
+void Plot::finishedCountingFFT()
+{
+    if (progressWindow)
+    {
+        progressBar->setValue(progressBar->maximum());
+        progressWindow->close();
+        delete progressWindow; progressWindow = 0;
+    }
+
+    plotReadyToPaint = true;
     tempFile.close();
     generator0 = new ImageGenerator(file, &tempFile, settings->colors(), this);
     generator1 = new ImageGenerator(file, &tempFile, settings->colors(), this);
@@ -156,7 +185,6 @@ bool Plot::openFile(QString filePath)
     setMaxImgOffset();
     emit MaximumOffset(max_img_offset);
     generate(img_nr,0);
-    return true;
 }
 
 void Plot::imageGenerated()
@@ -166,6 +194,8 @@ void Plot::imageGenerated()
 
 void Plot::paintEvent(QPaintEvent *)
 {
+    if (!plotReadyToPaint)
+        return;
     QPainter painter;
     painter.begin(this);
 

@@ -1,34 +1,33 @@
 #include "tempfilegenerator.h"
-#include "fft.h"
 #include "wavefile.h"
 #include <QDataStream>
+#include <QDebug>
 
-TempFileGenerator::TempFileGenerator(WaveFile *file, QDataStream *tempStream, FFT::FFT *fft, quint16 halfBufferSize, quint16 bufferGraduation, int maxOffsetFFT, QObject *parent) :
+TempFileGenerator::TempFileGenerator(WaveFile *file, QFile *tempFile, uint16 halfBufferSizeFFT, FFT::Window windowFFT, quint16 bufferGraduationFFT, int maxOffsetFFT, QObject *parent) :
     QThread(parent)
 {
     this->file = file;
-    this->dataStream = tempStream;
-    this->fft = fft;
-    this->buffer = new double[fft->bufferSize()];
-    this->halfBufferSize = halfBufferSize;
-    this->bufferGraduation = bufferGraduation;
+    this->fileFFT = tempFile;
+//    this->fft = fft;
+    this->halfBufferSize = halfBufferSizeFFT;
+    this->windowFFT = windowFFT;
+    this->bufferGraduation = bufferGraduationFFT;
     this->maxOffset = maxOffsetFFT;
-}
-
-TempFileGenerator::~TempFileGenerator()
-{
-    delete buffer;
 }
 
 void TempFileGenerator::run()
 {
-    currentOffset = 0;
-    QDataStream &tempStream = *dataStream;
+    if (!fileFFT->isOpen() || !fileFFT->isWritable())
+        fileFFT->open(QFile::WriteOnly);
+    QDataStream tempStream(fileFFT);
+    tempStream.setVersion(QDataStream::Qt_4_6);
+    FFT::FFT fft(2*halfBufferSize,windowFFT);
+    double *buffer = new double[fft.bufferSize()];
     for (int i=0; i<maxOffset; i++) //lenght of file loop
     {
-        file->readData(buffer,fft->bufferSize(),i*bufferGraduation,0);
-        fft->makeWindow(buffer);
-        fft->countFFT(buffer);
+        file->readData(buffer,fft.bufferSize(),i*bufferGraduation,0);
+        fft.makeWindow(buffer);
+        fft.countFFT(buffer);
         for (quint16 j=0; j<halfBufferSize; j++) // height of file loop (height of one FFT column)
         {
             if (buffer[j] < 1.0 && buffer[j] >= 0.0)
@@ -36,6 +35,7 @@ void TempFileGenerator::run()
             else
                 tempStream << static_cast<uchar> (255);
         }
-        currentOffset = i;
+        emit currentOffsetChanged(i);
     }
+    delete buffer;
 }

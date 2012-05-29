@@ -2,36 +2,33 @@
 #define TEMPFILEGENERATOR_H
 
 #include <QThread>
+#include "fft.h"
 
-namespace FFT
-{
-class FFT;
-}
 class WaveFile;
-class QDataStream;
+class QFile;
 
 class TempFileGenerator : public QThread
 {
     Q_OBJECT
 public:
-    TempFileGenerator(WaveFile *file, QDataStream *tempStream, FFT::FFT *fft, quint16 halfBufferFFTSize, quint16 FFTBufferGraduation, int maxOffsetFFT, QObject *parent = 0);
-    ~TempFileGenerator();
-    int currentFileOffset() const { return currentOffset; }
+    TempFileGenerator(WaveFile *file, QFile *tempFile, uint16 halfBufferSizeFFT, FFT::Window windowFFT, quint16 bufferGraduationFFT, int maxOffsetFFT, QObject *parent = 0);
 
 protected:
     void run();
 
+signals:
+    void currentOffsetChanged(int);
+
 private:
     // file data
     WaveFile *file;
-    QDataStream *dataStream;
-    FFT::FFT *fft;
-    double *buffer;
+    QFile *fileFFT;
+//    FFT::FFT *fft;
+    FFT::Window windowFFT;
+//    double *buffer;
     quint16 halfBufferSize;
     quint16 bufferGraduation;
     int maxOffset;
-    // progress data
-    int currentOffset;
 };
 
 #endif // TEMPFILEGENERATOR_H
