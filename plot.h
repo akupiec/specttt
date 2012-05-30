@@ -1,13 +1,17 @@
 #ifndef PLOT_H
 #define PLOT_H
 
-#include <QWidget>
+#include <QDir>
+#include <QDialog>
 #include <QDebug>
-#include <QDataStream>
-#include <QTemporaryFile>
+#include <QLabel>
 #include <QPainter>
 #include <QMouseEvent>
-#include <QDir>
+#include <QProgressBar>
+#include <QTemporaryFile>
+#include <QTime>
+#include <QVBoxLayout>
+#include <QWidget>
 
 #include "wavefile.h"
 #include "fft.h"
@@ -15,6 +19,7 @@
 #include "imagegenerator.h"
 #include "settings.h"
 #include "xml.h"
+#include "tempfilegenerator.h"
 
 #define DENSE 6
 

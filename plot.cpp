@@ -1,5 +1,4 @@
 #include "plot.h"
-#include "tempfilegenerator.h"
 
 #ifdef Q_OS_WIN32
 #include <windows.h>
@@ -9,12 +8,6 @@ void msleep(uint ms) { Sleep(ms); }
 void msleep(uint ms) { usleep(1000*ms); }
 #endif
 
-#include <QDialog>
-#include <QVBoxLayout>
-#include <QProgressBar>
-#include <QLabel>
-#include <QTime>
-
 #define SPECT_PROJECT_NAME "Spect2.ini"
 
 Plot::Plot(QWidget *parent) :
@@ -22,6 +15,7 @@ Plot::Plot(QWidget *parent) :
 {
     file = 0;
     img_offset = 0;
+    progressWindow = 0;
     draggingEnabled =0; // disable moving plot
     markerIndexdragging = -1; //disable dragging markers
     img0 = 0;
@@ -32,6 +26,7 @@ Plot::Plot(QWidget *parent) :
     plotReadyToPaint = true;
     //config
     imgZoom =1;
+
 }
 
 Plot::~Plot()
@@ -78,7 +73,7 @@ bool Plot::openFile(QString filePath)
 {
     if (file) // if file already exist
         resetPlot(); // reset all settings
-    FFT::FFT fft;
+
     //setting temp file
     tempFile.setAutoRemove(false);
     QString tempFilePath = QDir::tempPath() + QDir::separator() + filePath.split('/').last();
