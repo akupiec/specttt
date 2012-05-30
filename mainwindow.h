@@ -6,7 +6,6 @@
 #include <QFileDialog>
 #include "plot.h"
 #include "ui_mainwindow.h"
-#include "ui_config.h"
 
 namespace Ui {
     class MainWindow;
@@ -21,8 +20,10 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+protected:
+    void closeEvent(QCloseEvent *);
+
 private slots:
-    void tableWidget_update(int); // updating table of markers
     void on_actionImageGenerator_triggered();
     void setScrollBarMaximumValue(int);
 
@@ -30,14 +31,12 @@ private slots:
     void on_actionExit_triggered();
     void on_actionPreferences_triggered();
 
-    void on_config_buttonBox_clicked(QAbstractButton *);
-
     void on_buttonRefreshPlot_clicked();
 
     void on_actionMark_detect_triggered();
 
     void on_tableWidget_cellChanged(int row, int column);
-
+    void tableWidget_update(int index);
     void on_tableWidget_itemSelectionChanged();
 
     void on_textEdit_textChanged();
@@ -47,8 +46,7 @@ private slots:
 private:
     //ui parametrs
     Ui::MainWindow *ui;
-    Ui::Dialog uiConfig;
-    QDialog config;
+    bool allowEditingCells;
 
     //file
     QString filePath;

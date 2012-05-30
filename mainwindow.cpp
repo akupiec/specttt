@@ -1,14 +1,15 @@
+#include <QFileDialog>
+#include <QDebug>
 #include "mainwindow.h"
+#include "ui_mainwindow.h"
+#include "plot.h"
+#include "configdialog.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
-{    
+{
     ui->setupUi(this);
-
-    //config ui
-    uiConfig.setupUi(&config);
-    connect(uiConfig.buttonBox,SIGNAL(clicked(QAbstractButton*)),this,SLOT(on_config_buttonBox_clicked(QAbstractButton*)));
 
     // Table of markers
     ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -28,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
     size.append(10);
     size.append(800);
     ui->splitter_2->setSizes(size);
-
+    ui->zoomSpinBox->setValue(ui->plot->settings->plotZoomX() * 100);
 }
 
 MainWindow::~MainWindow()
@@ -58,20 +59,18 @@ void MainWindow::on_actionSplit_triggered()
 
 void MainWindow::on_actionPreferences_triggered()
 {
-    config.exec();
+    ConfigDialog dialog(ui->plot->settings,this);
+    if (dialog.exec() == QDialog::Accepted)
+    {   // reload settings
+        ui->plot->loadSettings();
+        if (ui->plot->file && dialog.reloadFile())
+            ui->plot->openFile( ui->plot->file->fileName() );
+    }
 }
 
 void MainWindow::on_actionExit_triggered()
 {
     exit(0);
-}
-
-void MainWindow::on_config_buttonBox_clicked(QAbstractButton *button)
-{
-    if(button->text() == tr("OK"))
-        qDebug() << "OK" ;
-    if(button->text() == tr("Cancel"))
-        qDebug()  << "Cancel";
 }
 
 void MainWindow::on_buttonRefreshPlot_clicked()
@@ -103,11 +102,12 @@ void MainWindow::on_actionMark_detect_triggered()
         ui->tableWidget->setItem(i,0,item); // adding item to table
     }
     ui->tableWidget->update(); // update table
+    allowEditingCells = true; // ? it was needed for some reason
 }
 
 void MainWindow::on_tableWidget_cellChanged(int row, int column)
 {
-    if(row > -1 && row < ui->plot->markerList.count())
+    if(allowEditingCells && column == 0)
         ui->plot->markerList[row].setLabel(ui->tableWidget->item(row,column)->text());
 }
 
@@ -153,6 +153,7 @@ void MainWindow::tableWidget_update(int index)
 
 void MainWindow::on_buttonMarkerDelete_clicked()
 {
+    allowEditingCells = true; // ? it was needed for some reason
     int index = ui->tableWidget->currentRow(); // taking index of curent selected row
     ui->tableWidget->clearSelection(); // clearing sellection (nessesery for removing row)
     QTableWidgetItem *item = ui->tableWidget->item(ui->tableWidget->currentRow(),0); // taking pointer of item to delete it
@@ -162,4 +163,21 @@ void MainWindow::on_buttonMarkerDelete_clicked()
     else ui->tableWidget->setRowCount(0); // set row number to 0
     ui->plot->delMarker(index); // deleting selected row form Marker List Vector
     ui->plot->selectMarker(ui->tableWidget->currentRow()); // selecting next marker and refreshing plot
+}
+
+void MainWindow::closeEvent(QCloseEvent *)
+{
+    if (ui->plot->settings->clearTempDir())
+    {
+        QDir dir = QDir::temp();
+        QStringList files = dir.entryList(QStringList("*.fft"),QDir::Files);
+        if (files.isEmpty())
+            return;
+        qDebug() << "Deleting temporary files...";
+        foreach (QString fileName, files)
+        {
+            if (QFile::remove(dir.absolutePath() + QDir::separator() + fileName))
+                qDebug() << fileName << "deleted";
+        }
+    }
 }

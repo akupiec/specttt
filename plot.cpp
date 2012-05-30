@@ -1,5 +1,13 @@
 #include "plot.h"
 
+#ifdef Q_OS_WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
+
+#include <QDebug>
+
 #define SPECT_PROJECT_NAME "Spect2.ini"
 
 Plot::Plot(QWidget *parent) :
@@ -7,7 +15,7 @@ Plot::Plot(QWidget *parent) :
 {
     file = 0;
     img_offset = 0;
-    draggingEnabled =0; // disable moving plot
+    draggingEnabled = 0; // disable moving plot
     markerIndexdragging = -1; //disable dragging markers
     markerAdd = -1;
     img0 = 0;
@@ -15,19 +23,23 @@ Plot::Plot(QWidget *parent) :
     img_nr = 0;
     generator0 = 0;
     generator1 = 0;
-    //config   
-    imgZoom =1;
+    //config
+    settings = new Settings(QString(SPECT_PROJECT_NAME),QSettings::IniFormat,this);
+    loadSettings();
 }
 
 Plot::~Plot()
 {
-    delete file; file = 0;
-    delete img0; img0 = 0;
-    delete img1; img1 = 0;
-    delete generator0; generator0 = 0;
-    delete generator1; generator1 = 0;
-    delete settings; settings = 0;
-    delete xml;
+    if (file)
+    {   // SIGSEGV protection
+        delete file;
+        delete generator0;
+        delete generator1;
+        delete xml;
+    }
+    delete img0;
+    delete img1;
+    delete settings;
 }
 
 void Plot::resetPlot()
@@ -41,12 +53,26 @@ void Plot::resetPlot()
 
     //destroing all objects
     delete file; file = 0;
+    qDebug() << "resetPlot(): Images deleted. Deleting generators...";
+    while (generator0 && generator0->isRunning())
+#ifdef Q_OS_WIN32
+        Sleep(6);
+#else
+        usleep(6000);
+#endif
+    delete generator0; generator0 = 0;
+    while (generator1 && generator1->isRunning())
+#ifdef Q_OS_WIN32
+        Sleep(6);
+#else
+        usleep(6000);
+#endif
+    delete generator1; generator1 = 0;
+    qDebug() << "resetPlot(): Generators deleted.";
     delete img0; img0 = 0;
     delete img1; img1 = 0;
-    delete generator0; generator0 = 0;
-    delete generator1; generator1 = 0;
-    delete settings; settings = 0;
-    delete xml; xml =0;
+//    delete settings; settings = 0;
+//    delete xml; xml =0;
 
     //resetting mouse confing
     img_offset = 0;
@@ -62,8 +88,13 @@ void Plot::resetPlot()
 bool Plot::openFile(QString filePath)
 {
     if (file) // if file already exist
+    {
         resetPlot(); // reset all settings
-    FFT::FFT fft;
+        delete file;
+    }
+    FFT::FFT fft(settings->FFT_bufferSize(), settings->FFT_window());
+    qDebug() << "Plot::openFile: FFT object created";
+    qDebug() << "Plot::openFile: FFT buffer size:" << fft.bufferSize();
     double *buffer = new double [fft.bufferSize()]; //FFT
     //setting temp file
     tempFile.setAutoRemove(false);
@@ -76,20 +107,21 @@ bool Plot::openFile(QString filePath)
     tempStream.setVersion(12);
 
     //wave file
+    qDebug() << "Plot::openFile: opening wave file...";
     file = new WaveFile(filePath);
     xml = new Xml(file->fileName());
-    settings = new Settings(QString(SPECT_PROJECT_NAME),QSettings::IniFormat,this);
 
     halfFFTBufferSize = fft.bufferSize() / 2; //quint half of buffer fft
-    quint16 FFTBufferGraduation = halfFFTBufferSize / DENSE; // lenght of graduation depended of densing degree
+    quint16 FFTBufferGraduation = halfFFTBufferSize / dense; // lenght of graduation depended of densing degree
     maxFFToffset = 2 * (int(double(file->samples()) / FFTBufferGraduation + 1.) - 1); //amout of fft samples in file
+    int tempFileWindowFFT;
     quint16 tempFileHeight = 0;
     int tempFileWidth = 0;
     if (QFile::exists(tempFilePath) && tempFile.size() > halfFFTBufferSize)
-        tempStream >> tempFileHeight >> tempFileWidth; //reading header form file
+        tempStream >> tempFileHeight >> tempFileWidth >> tempFileWindowFFT; //reading header form file
     else
         qDebug() << "Plot::openFile -- temp file read error or file not exists";
-    if (halfFFTBufferSize != tempFileHeight || maxFFToffset != tempFileWidth) // checking if temp file need to be regenerated
+    if (halfFFTBufferSize != tempFileHeight || maxFFToffset != tempFileWidth || static_cast<int> (fft.windowType()) != tempFileWindowFFT) // checking if temp file need to be regenerated
     {
         qDebug() << "Plot::openFile -- generating new FFT this may take a while, please wait...";
         if (!tempFile.remove()) //removing old temp file
@@ -98,7 +130,7 @@ bool Plot::openFile(QString filePath)
         if (!tempFile.open() || !tempFile.seek(0)) //creating new one
             return false;
         tempStream.setDevice(&tempFile);
-        tempStream << halfFFTBufferSize << maxFFToffset; // saving new header to temp file
+        tempStream << halfFFTBufferSize << maxFFToffset << static_cast<int> (fft.windowType()); // saving new header to temp file
         for (int i=0; i<maxFFToffset; i++) //lenght of file loop
         {
             file->readData(buffer,fft.bufferSize(),i*FFTBufferGraduation,0);
@@ -123,7 +155,7 @@ bool Plot::openFile(QString filePath)
     connect(generator0, SIGNAL(finished()), this, SLOT(imageGenerated()));
     connect(generator1, SIGNAL(finished()), this, SLOT(imageGenerated()));
 
-    img_nr = 0;    
+    img_nr = 0;
     setMaxImgOffset();
     emit MaximumOffset(max_img_offset);
     generate(img_nr,0);
@@ -201,11 +233,11 @@ void Plot::paintEvent(QPaintEvent *)
     //Veritical
     painter.setPen(QPen(QBrush(Qt::white),1,Qt::DotLine));
     QString value;
-    int grindVerticalCount = ((this->width()-AX_Y_DESC_SPACE-frameWidth)/grindVerticalSpace)+1; //amout of grind lines
+    int gridVerticalCount = ((this->width()-AX_Y_DESC_SPACE-frameWidth)/gridVerticalSpace)+1; //amout of grind lines
     int offset; // painting grind offset
-    for (int i=0;i<grindVerticalCount;i++)  // painting grind loop
+    for (int i=0;i<gridVerticalCount;i++)  // painting grind loop
     {
-        offset = (i*grindVerticalSpace)+frameWidth;
+        offset = (i*gridVerticalSpace)+frameWidth;
         painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
         if (file != 0)
             value.setNum((((offset-frameWidth+img_offset)*file->time()/maxFFToffset)/generator0->zoomFactorX()),'f',3);
@@ -214,20 +246,20 @@ void Plot::paintEvent(QPaintEvent *)
         painter.drawText(offset,this->height()-AX_X_DESC_SPACE+frameWidth+15,value);
     }
     //Horizontal
-    int grindHorizontalCount = ((this->height()-AX_X_DESC_SPACE-frameWidth)/grindHorizontalSpace)+1;
+    int gridHorizontalCount = ((this->height()-AX_X_DESC_SPACE-frameWidth)/gridHorizontalSpace)+1;
     offset = this->height()-AX_X_DESC_SPACE-1;
     int frequencyGrindOffset =0; // frequensy per grind line
     // depends on img height so it have to check both img0 and img1 to protect dividing by 0
     if (file != 0 && img0 && !img0->isNull())
-        frequencyGrindOffset = grindHorizontalSpace*file->frequency()/img0->height();
+        frequencyGrindOffset = gridHorizontalSpace*file->frequency()/img0->height();
     if (file != 0 && img1 && !img1->isNull())
-        frequencyGrindOffset = grindHorizontalSpace*file->frequency()/img1->height();
-    for (int i=0;i<grindHorizontalCount;i++) // painting loop
+        frequencyGrindOffset = gridHorizontalSpace*file->frequency()/img1->height();
+    for (int i=0;i<gridHorizontalCount;i++) // painting loop
     {
         painter.drawLine(frameWidth,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
         value.setNum(i*frequencyGrindOffset);
         painter.drawText(this->width()-AX_Y_DESC_SPACE+15,offset,value);
-        offset -= grindHorizontalSpace;
+        offset -= gridHorizontalSpace;
     }
 
     painter.end();
@@ -235,7 +267,7 @@ void Plot::paintEvent(QPaintEvent *)
 
 void Plot::refreshPlot()
 {
-    img_realWidth = this->width()-AX_Y_DESC_SPACE-frameWidth+generateImgBuffor;
+    img_realWidth = this->width()-AX_Y_DESC_SPACE-frameWidth+generateImgBuffer;
     //after resize set evrithing to 0
     img_nr = 0;
     img_offset = 0;
@@ -401,7 +433,7 @@ inline void Plot::moveGenerate()
     if(img_offset > img_offset_old) // if plot moved to left
     {
         // genereting NEXT img to img0 or img1 depends on curently painted
-        if(img_offset % img_realWidth > generateImgBuffor/2)
+        if(img_offset % img_realWidth > generateImgBuffer/2)
         {
             offset = (img_offset/img_realWidth)+1;
             if(offset != last_generated_offset)
@@ -414,7 +446,7 @@ inline void Plot::moveGenerate()
     else
     {
         // generating PREVIOUS img
-        if(img_offset%img_realWidth < generateImgBuffor/2)
+        if(img_offset%img_realWidth < generateImgBuffer/2)
         {
             int offset = (img_offset/img_realWidth)-1;
             if(offset < 0) offset =0;
@@ -446,6 +478,8 @@ void Plot::splitFile()
 void Plot::setZoom(float zoom)
 {
     imgZoom = zoom;
+    if (!generator0)
+        return;
     qDebug() << "Plot::setZoom (in status bar) -- waiting until generation finished";
     while(!generator0->isFinished() && !generator1->isFinished());
     generator0->setZoomFactorX(zoom);
@@ -478,4 +512,14 @@ int Plot::plotWidth()
 int Plot::plotHeight()
 {
     return this->height() - AX_X_DESC_SPACE - 2*frameWidth;
+}
+
+void Plot::loadSettings()
+{
+    frameWidth = settings->plotFrameWidth();
+    gridVerticalSpace = settings->plotGridVerticalSpacing();
+    gridHorizontalSpace = settings->plotGridHorizontalSpacing();
+    generateImgBuffer = settings->plotImageGeneratorBuffer();
+    setZoom(settings->plotZoomX());
+    dense = settings->FFT_dense();
 }
