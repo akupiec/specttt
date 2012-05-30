@@ -1,13 +1,17 @@
 #ifndef PLOT_H
 #define PLOT_H
 
-#include <QWidget>
+#include <QDir>
+#include <QDialog>
 #include <QDebug>
-#include <QDataStream>
-#include <QTemporaryFile>
+#include <QLabel>
 #include <QPainter>
 #include <QMouseEvent>
-#include <QDir>
+#include <QProgressBar>
+#include <QTemporaryFile>
+#include <QTime>
+#include <QVBoxLayout>
+#include <QWidget>
 
 #include "wavefile.h"
 #include "fft.h"
@@ -15,8 +19,13 @@
 #include "imagegenerator.h"
 #include "settings.h"
 #include "xml.h"
+#include "tempfilegenerator.h"
+
+#define DENSE 1
 
 class Settings;
+class QProgressBar;
+class QLabel;
 
 #define AX_X_DESC_SPACE 30
 #define AX_Y_DESC_SPACE 60
@@ -58,6 +67,10 @@ signals:
     void ImgOffset(int); // emit curent position
     void MarkerListUpdate(int); //emit curently selected index and refreshing ui table of markers
 
+public slots:
+    void setProgressFFT(int); // set FFT counting progress bar value while wave file opening
+    void finishedCountingFFT(); // setup plot when wave file opened and FFT counted
+
 private slots:
     void setImgOffset(int); // connected to horizontal scroll bar for setting imr_offset
     void imageGenerated(); // finished generation of new img
@@ -76,7 +89,12 @@ private:
     //FFTFile
     int maxFFToffset;
     int offsetFileToOffsetFFT(quint32 offset) {return offset *((double)maxFFToffset/file->maxOffset());}
-    quint32 offsetFFTToOffsetFile(int offset) {return offset *(file->maxOffset()/maxFFToffset);}
+    quint32 offsetFFTToOffsetFile(int offset) {return offset /(file->maxOffset()/maxFFToffset);}
+
+    // FFT counting progress bar window
+    QWidget *progressWindow;
+    QProgressBar *progressBar;
+    QLabel *progressLabel;
 
     //Painting
     virtual void paintEvent(QPaintEvent *);
@@ -85,6 +103,7 @@ private:
     QImage *img0;
     QImage *img1;
     int img_realWidth; //width of img without rounding error
+    bool plotReadyToPaint;
 
     //generating
     ImageGenerator *generator0; //pointer to thread class
