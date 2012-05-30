@@ -25,10 +25,12 @@ public:
     // fields access
     int plotFrameWidth() const { return frameWidth; }
     void setPlotFrameWidth(int v) { frameWidth = v; }
-    int plotGridVerticalSpacing() const { return gridVerticalSpace; }
-    void setPlotGridVerticalSpacing(int v) { gridVerticalSpace = v; }
-    int plotGridHorizontalSpacing() const { return gridHorizontalSpace; }
-    void setPlotGridHorizontalSpacing(int v) { gridHorizontalSpace = v; }
+    int plotGridVerticalCount() const { return gridVerticalCount; }
+    void setPlotGridVerticalCount(int v) { gridVerticalCount = v; }
+    int plotGridHorizontalCount() const { return gridHorizontalCount; }
+    void setPlotGridHorizontalCount(int v) { gridHorizontalCount = v; }
+    bool plotGridVisibility() const { return gridVisibility;}
+    void setPlotGridVisibility(bool v) {gridVisibility = v;}
     int plotImageGeneratorBuffer() const { return generateImgBuffer; }
     void setPlotImageGeneratorBuffer(int v) { generateImgBuffer = v; }
     float plotZoomX() const { return imgZoom; }
@@ -48,8 +50,9 @@ private:
     QVector<QRgb> rgbVector;
     // plot
     int frameWidth;
-    int gridVerticalSpace;
-    int gridHorizontalSpace;
+    int gridVerticalCount;
+    int gridHorizontalCount;
+    bool gridVisibility;
     int generateImgBuffer;
     float imgZoom;
     // FFT

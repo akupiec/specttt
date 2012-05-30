@@ -65,8 +65,6 @@ void Plot::resetPlot()
     qDebug() << "resetPlot(): Generators deleted.";
     delete img0; img0 = 0;
     delete img1; img1 = 0;
-//    delete settings; settings = 0;
-//    delete xml; xml =0;
 
     //resetting mouse confing
     img_offset = 0;
@@ -271,20 +269,21 @@ void Plot::paintEvent(QPaintEvent *)
     //Veritical
     painter.setPen(QPen(QBrush(Qt::white),1,Qt::DotLine));
     QString value;
-    int gridVerticalCount = ((this->width()-AX_Y_DESC_SPACE-frameWidth)/gridVerticalSpace)+1; //amout of grind lines
+    double gridVerticalSpace = (this->width()-AX_Y_DESC_SPACE-frameWidth)/(double)(gridVerticalCount-1);
     int offset; // painting grind offset
     for (int i=0;i<gridVerticalCount;i++)  // painting grind loop
     {
         offset = (i*gridVerticalSpace)+frameWidth;
-        painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
-        if (file != 0)
-            value.setNum((((offset-frameWidth+img_offset)*file->time()/maxFFToffset)/generator0->zoomFactorX()),'f',3);
-        else
-            value = "0.0";
+        if(gridVisibility) painter.drawLine(offset,frameWidth,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
+        else  painter.drawLine(offset,this->height()-AX_X_DESC_SPACE+frameWidth-2,offset,this->height()-AX_X_DESC_SPACE+frameWidth+2);
+
+        if (file != 0) value.setNum((((offset-frameWidth+img_offset)*file->time()/maxFFToffset)/generator0->zoomFactorX()),'f',3);
+        else value = "0.0";
         painter.drawText(offset,this->height()-AX_X_DESC_SPACE+frameWidth+15,value);
     }
     //Horizontal
-    int gridHorizontalCount = ((this->height()-AX_X_DESC_SPACE-frameWidth)/gridHorizontalSpace)+1;
+    gridHorizontalCount = 10;
+    double gridHorizontalSpace = (this->height()-AX_X_DESC_SPACE-frameWidth)/(double)(gridHorizontalCount-1);
     offset = this->height()-AX_X_DESC_SPACE-1;
     int frequencyGrindOffset =0; // frequensy per grind line
     // depends on img height so it have to check both img0 and img1 to protect dividing by 0
@@ -294,9 +293,11 @@ void Plot::paintEvent(QPaintEvent *)
         frequencyGrindOffset = gridHorizontalSpace*file->frequency()/img1->height();
     for (int i=0;i<gridHorizontalCount;i++) // painting loop
     {
-        painter.drawLine(frameWidth,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
+        if(offset < frameWidth) offset = frameWidth; //first (last in loop) from top line
+        if(gridVisibility) painter.drawLine(frameWidth,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
+        else painter.drawLine(this->width()-AX_Y_DESC_SPACE+frameWidth-2,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
         value.setNum(i*frequencyGrindOffset);
-        painter.drawText(this->width()-AX_Y_DESC_SPACE+15,offset,value);
+        painter.drawText(this->width()-AX_Y_DESC_SPACE+15,offset+8,value);
         offset -= gridHorizontalSpace;
     }
 
@@ -555,8 +556,9 @@ int Plot::plotHeight()
 void Plot::loadSettings()
 {
     frameWidth = settings->plotFrameWidth();
-    gridVerticalSpace = settings->plotGridVerticalSpacing();
-    gridHorizontalSpace = settings->plotGridHorizontalSpacing();
+    gridVerticalCount = settings->plotGridVerticalCount();
+    gridHorizontalCount = settings->plotGridHorizontalCount();
+    gridVisibility = settings->plotGridVisibility();
     generateImgBuffer = settings->plotImageGeneratorBuffer();
     setZoom(settings->plotZoomX());
     dense = settings->FFT_dense();

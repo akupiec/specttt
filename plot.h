@@ -116,8 +116,9 @@ private:
 
     //config
     int frameWidth;
-    int gridVerticalSpace;
-    int gridHorizontalSpace;
+    int gridVerticalCount;
+    int gridHorizontalCount;
+    bool gridVisibility;
     int generateImgBuffer; // have to be calculated how much extra ram is needed for it (at 20000 is using extra ~280-380 Mb)
     int dense;
 

@@ -55,8 +55,9 @@ void Settings::readPlotSettings()
 {
     beginGroup("Plot");
     frameWidth = value("frameWidth", 2).toInt();
-    gridVerticalSpace = value("gridVerticalSpace", 40).toInt();
-    gridHorizontalSpace = value("gridHorizontalSpace", 20).toInt();
+    gridVerticalCount = value("gridVerticalCount", 40).toInt();
+    gridHorizontalCount = value("gridHorizontalCount", 20).toInt();
+    gridVisibility = value("gridVisibility",true).toBool();
     generateImgBuffer = value("imageGeneratorBuffer", 1000).toInt();
     imgZoom = value("zoomX", 1.0f).toFloat();
     endGroup();
@@ -66,8 +67,9 @@ void Settings::savePlotSettings()
 {
     beginGroup("Plot");
     setValue("frameWidth", frameWidth);
-    setValue("gridVerticalSpace", gridVerticalSpace);
-    setValue("gridHorizontalSpace", gridHorizontalSpace);
+    setValue("gridVerticalCount", gridVerticalCount);
+    setValue("gridHorizontalCount", gridHorizontalCount);
+    setValue("gridVisibility",gridVisibility);
     setValue("imageGeneratorBuffer", generateImgBuffer);
     setValue("zoomX", imgZoom);
     endGroup();

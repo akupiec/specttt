@@ -9,6 +9,7 @@ class PlotWidget;
 class QSlider;
 class QSpinBox;
 class Settings;
+class QCheckBox;
 
 class PlotWidget : public QWidget
 {
@@ -19,6 +20,7 @@ public:
     ~PlotWidget();
     void setRange(int min, int max, QSlider *slider, QSpinBox *spinBox);
     void setValue(int value, QSlider *slider, QSpinBox *spinBox);
+    void setValue(bool value, QCheckBox *checkBox);
     void saveSettings();
 
 private:

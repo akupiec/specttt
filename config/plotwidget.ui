@@ -20,21 +20,21 @@
       <string>Plot</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="4" column="0">
+      <item row="6" column="0">
        <widget class="QLabel" name="zoomLabel">
         <property name="text">
          <string>Default zoom</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
+      <item row="2" column="0">
        <widget class="QLabel" name="gridVerticalSpaceLabel">
         <property name="text">
          <string>Grid vertical spacing</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
+      <item row="5" column="0">
        <widget class="QLabel" name="imgGeneratorBufferLabel">
         <property name="text">
          <string>Image generator buffer</string>
@@ -44,14 +44,14 @@
       <item row="0" column="3">
        <widget class="QSpinBox" name="frameWidthSpinBox"/>
       </item>
-      <item row="2" column="0">
+      <item row="3" column="0">
        <widget class="QLabel" name="gridHorizontalSpaceLabel">
         <property name="text">
          <string>Grid horizontal spacing</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="3">
+      <item row="2" column="3">
        <widget class="QSpinBox" name="gridVerticalSpinBox"/>
       </item>
       <item row="0" column="2">
@@ -68,44 +68,51 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="3">
+      <item row="3" column="3">
        <widget class="QSpinBox" name="gridHorizontalSpinBox"/>
       </item>
-      <item row="3" column="3">
+      <item row="5" column="3">
        <widget class="QSpinBox" name="imgGeneratorBufferSpinBox"/>
       </item>
-      <item row="2" column="2">
+      <item row="3" column="2">
        <widget class="QSlider" name="gridHorizontalSlider">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
        </widget>
       </item>
-      <item row="1" column="2">
+      <item row="2" column="2">
        <widget class="QSlider" name="gridVerticalSlider">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
        </widget>
       </item>
-      <item row="3" column="2">
+      <item row="5" column="2">
        <widget class="QSlider" name="imgGeneratorBufferSlider">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
        </widget>
       </item>
-      <item row="4" column="2">
+      <item row="6" column="2">
        <widget class="QSlider" name="zoomSlider">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
        </widget>
       </item>
-      <item row="4" column="3">
+      <item row="6" column="3">
        <widget class="QSpinBox" name="zoomSpinBox">
         <property name="suffix">
          <string>%</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QCheckBox" name="gridVisibilityCheckBox">
+        <property name="text">
+         <string>Show Grind</string>
         </property>
        </widget>
       </item>
