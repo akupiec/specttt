@@ -4,6 +4,7 @@
 #include "config/colorswidget.h"
 #include "config/plotwidget.h"
 #include "config/fftwidget.h"
+#include "config/detectwidget.h"
 
 bool ConfigDialog::fileSettingsChanged = false;
 
@@ -23,7 +24,9 @@ ConfigDialog::ConfigDialog(Settings *s, QWidget *parent) :
     ui->scrollAreaWidgetContents->layout()->addWidget(plotWidget);
     fftWidget = new FFTWidget(s,this);
     ui->scrollAreaWidgetContents->layout()->addWidget(fftWidget);
-    widgetList << colorsWidget << plotWidget << fftWidget;
+    detectWidget = new DetectWidget(s,this);
+    ui->scrollAreaWidgetContents->layout()->addWidget(detectWidget);
+    widgetList << colorsWidget << plotWidget << fftWidget << detectWidget;
     foreach (QWidget *widget, widgetList)
         widget->hide();
     connect(ui->listWidget, SIGNAL(currentRowChanged(int)), SLOT(setCurrentWidget(int)));
@@ -46,6 +49,7 @@ void ConfigDialog::accept()
     int dense = settings->FFT_dense();
     fftWidget->saveSettings();
     fileSettingsChanged = bool(bufferSize != settings->FFT_bufferSize() || window != settings->FFT_window() || dense != settings->FFT_dense());
+    detectWidget->saveSettings();
     QDialog::accept();
 }
 

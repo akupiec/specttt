@@ -79,6 +79,14 @@
          <normaloff>:/icons/config/fft.png</normaloff>:/icons/config/fft.png</iconset>
        </property>
       </item>
+      <item>
+       <property name="text">
+        <string>Detection</string>
+       </property>
+       <property name="icon">
+        <iconset theme="edit-find"/>
+       </property>
+      </item>
      </widget>
      <widget class="QScrollArea" name="scrollArea">
       <property name="widgetResizable">

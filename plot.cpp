@@ -435,8 +435,13 @@ inline void Plot::moveGenerate()
 
 void Plot::detectBeeps(int channelId)
 {
-    if(file)
-        file->detectBeeps(&markerList,channelId);
+    if(!file)
+        return;
+    DetectionParams params;
+    params.beepThreshold = settings->beepThreshold();
+    params.period = settings->beepPeriod();
+    params.maxPausePeriods = settings->maxBeepPausePeriods();
+    file->detectBeeps(&params,&markerList,channelId);
     this->update();
 }
 
