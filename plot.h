@@ -21,8 +21,6 @@
 #include "xml.h"
 #include "tempfilegenerator.h"
 
-class Settings;
-class QProgressBar;
 class ProgressDialog;
 
 #define AX_X_DESC_SPACE 30
@@ -68,6 +66,8 @@ signals:
 public slots:
     void setProgressFFT(int); // set FFT counting progress bar value while wave file opening
     void finishedCountingFFT(); // setup plot when wave file opened and FFT counted
+    void saveXml();
+    void loadXml();
 
 private slots:
     void setImgOffset(int); // connected to horizontal scroll bar for setting imr_offset
@@ -137,13 +137,13 @@ private:
     virtual void mouseMoveEvent(QMouseEvent *);
     int oldMousePos; //used only in mose move event
 
-    QTemporaryFile tempFile; // plot data temporary file
-    Xml *xml;
 public:
     //File data objects
     WaveFile *file; // wave file object
     QVector<Markers> markerList; // markers list object
+    QTemporaryFile tempFile; // plot data temporary file
     Settings *settings; // plot settings object
+    Xml *xml;
 };
 
 #endif // PLOT_H

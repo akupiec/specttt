@@ -6,7 +6,7 @@ class Markers
 {
 public:
     Markers(quint32 beginOffset, quint32 endOffset, QString label, QString note = "");
-    Markers(){};
+    Markers(){}
 
     //Label will be name of file
     void setLabel(QString label){_label = label;}

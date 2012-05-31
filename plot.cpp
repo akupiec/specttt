@@ -67,6 +67,8 @@ void Plot::resetPlot()
     qDebug() << "resetPlot(): Generators deleted.";
     delete img0; img0 = 0;
     delete img1; img1 = 0;
+    delete settings; settings = 0;
+    delete xml; xml =0;
 
     //resetting mouse confing
     img_offset = 0;
@@ -74,9 +76,9 @@ void Plot::resetPlot()
     emit ImgOffset(img_offset);
 
     //resetting markers
-    MarkerListUpdate(-1);
-    markerList.clear();
     markerIndexdragging = -1;
+    MarkerListUpdate(markerIndexdragging);
+    markerList.clear();
 }
 
 bool Plot::openFile(QString filePath)
@@ -103,6 +105,7 @@ bool Plot::openFile(QString filePath)
     qDebug() << "Plot::openFile: opening wave file...";
     file = new WaveFile(filePath);
     xml = new Xml(file->fileName());
+    settings = new Settings(QString(SPECT_PROJECT_NAME),QSettings::IniFormat,this);
 
     halfFFTBufferSize = 256; //quint half of buffer fft
     quint16 FFTBufferGraduation = halfFFTBufferSize / dense; // lenght of graduation depended of densing degree
@@ -561,6 +564,18 @@ int Plot::plotWidth()
 int Plot::plotHeight()
 {
     return this->height() - AX_X_DESC_SPACE - 2*frameWidth;
+}
+
+void Plot::saveXml()
+{
+    if (xml)
+        xml->saveMarkers(&markerList);
+}
+
+void Plot::loadXml()
+{
+    if (xml)
+        xml->loadMarkers(&markerList);
 }
 
 void Plot::loadSettings()

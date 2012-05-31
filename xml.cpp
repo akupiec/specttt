@@ -22,6 +22,7 @@ void Xml::saveMarkers(QVector<Markers> *markers)
         xmlSignal.setAttribute("note",Markers(markers->at(i)).note());
         xmlRoot.appendChild(xmlSignal);
     }
+//    qDebug() << xml.toString(2);
 
     // saving xml file
     QFile file(fileName.append(".xml"));
@@ -36,23 +37,39 @@ void Xml::saveMarkers(QVector<Markers> *markers)
     QTextStream stream (&file);
     xml.save(stream,4,QDomNode::EncodingFromDocument);
     file.close();
-    qDebug() << "Xml::saveMarkers -- markers saved";
+    qDebug() << "Xml::saveMarkers -- markers saved" << "in" << file.fileName();
 }
 
 void Xml::loadMarkers(QVector<Markers> *markers)
 {
     QDomDocument xml("xml");
     QFile file(fileName.append(".xml"));
-    if (!file.open(QIODevice::ReadOnly))
-        return;
-    if (!xml.setContent(&file)) {
+    while (!file.open(QIODevice::ReadOnly))
+    {
+        QString path = QFileDialog::getOpenFileName(0, tr("Open file"), QDir::homePath(), tr("Markers files").append(" (*.xml)"));
+        if (path.isEmpty()) // when file dialog was canceled
+            return;
+        file.setFileName(path);
+    }
+    if (!xml.setContent(&file))
+    {
         file.close();
         return;
     }
     file.close();
+    markers->clear(); // clear markers list after open XML file success
 
     // print out the element names of all elements that are direct children
     // of the outermost element.
     QDomElement docElem = xml.documentElement();
+    Markers marker;
+    for (QDomElement e=docElem.firstChildElement(); !e.isNull(); e=e.nextSiblingElement())
+    {
+        marker.setLabel(e.tagName());
+        marker.setBeginOffset(e.attribute("beginOffset").toInt());
+        marker.setEndOffset(e.attribute("endOffset").toInt());
+        marker.setNote(e.attribute("note"));
+        markers->append(marker);
+    }
     qDebug() << "Xml::loadMarkers -- markers loaded";
 }

@@ -43,6 +43,8 @@ private slots:
 
     void on_buttonMarkerDelete_clicked();
 
+    void on_actionMark_load_triggered();
+
 private:
     //ui parametrs
     Ui::MainWindow *ui;

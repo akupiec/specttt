@@ -8,7 +8,7 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
-{
+{    
     ui->setupUi(this);
 
     // Table of markers
@@ -16,6 +16,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     connect(ui->buttonMarkerAdd,SIGNAL(clicked()),ui->plot,SLOT(addMarker()));
     connect(ui->plot,SIGNAL(MarkerListUpdate(int)),this,SLOT(tableWidget_update(int)));
+
+    // connecting markers actions
+    connect(ui->actionMark_save, SIGNAL(triggered()), ui->plot, SLOT(saveXml()));
 
     // Horizontal ScrollBar config
     ui->horizontalScrollBar->setMinimum(0);
@@ -180,4 +183,18 @@ void MainWindow::closeEvent(QCloseEvent *)
                 qDebug() << fileName << "deleted";
         }
     }
+}
+
+void MainWindow::on_actionMark_load_triggered()
+{
+    ui->plot->loadXml();
+    // load markers to table widget
+    for(int i=0; i<ui->plot->markerList.count();i++)
+    {
+        ui->tableWidget->setRowCount(i+1); // adding new row
+        QTableWidgetItem *item = new QTableWidgetItem(ui->plot->markerList[i].label()); // making new item for table
+        ui->tableWidget->setItem(i,0,item); // adding item to table
+    }
+    ui->tableWidget->update(); // update table
+    ui->plot->update();
 }
