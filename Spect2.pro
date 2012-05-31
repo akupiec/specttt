@@ -31,7 +31,6 @@ HEADERS  += mainwindow.h \
     plot.h \
     markers.h \
     imagegenerator.h \
-    cyclicqueue.h \
     settings.h \
     config/colorswidget.h \
     xml.h \
@@ -46,8 +45,7 @@ FORMS    += mainwindow.ui \
     config/plotwidget.ui \
     config/fftwidget.ui
 
-OTHER_FILES += \
-    TODO
+OTHER_FILES +=
 
 RESOURCES += \
     resources.qrc

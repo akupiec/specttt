@@ -21,8 +21,6 @@
 #include "xml.h"
 #include "tempfilegenerator.h"
 
-#define DENSE 1
-
 class Settings;
 class QProgressBar;
 class QLabel;
@@ -138,13 +136,13 @@ private:
     virtual void mouseMoveEvent(QMouseEvent *);
     int oldMousePos; //used only in mose move event
 
+    QTemporaryFile tempFile; // plot data temporary file
+    Xml *xml;
 public:
     //File data objects
     WaveFile *file; // wave file object
     QVector<Markers> markerList; // markers list object
-    QTemporaryFile tempFile; // plot data temporary file
     Settings *settings; // plot settings object
-    Xml *xml;
 };
 
 #endif // PLOT_H

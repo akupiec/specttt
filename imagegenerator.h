@@ -4,7 +4,7 @@
 #include <QThread>
 #include <QSize>
 #include <QColor>
-#include "cyclicqueue.h"
+#include <QPair>
 
 class QTemporaryFile;
 class QImage;
