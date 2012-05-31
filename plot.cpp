@@ -202,6 +202,8 @@ void Plot::killFFT()
     delete tempFileGenerator; tempFileGenerator = 0;
     tempFile.close();
     tempFile.remove();
+    file->close();
+    delete file; file = 0;
 }
 
 void Plot::imageGenerated()
@@ -525,7 +527,7 @@ void Plot::splitFile()
 void Plot::setZoom(float zoom)
 {
     imgZoom = zoom;
-    if (!generator0)
+    if (!generator0 || !file)
         return;
     qDebug() << "Plot::setZoom (in status bar) -- waiting until generation finished";
     while(!generator0->isFinished() && !generator1->isFinished());
