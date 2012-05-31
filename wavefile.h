@@ -6,20 +6,27 @@
 
 #include "markers.h"
 
+struct DetectionParams
+{
+    qreal beepThreshold; // minimum avarange amplitude
+    quint16 period; // detection buffer size in miliseconds
+    quint8 maxPausePeriods; // maximum count of periords 'period' to ignore beep pause
+};
+
 class WaveFile : public QFile
 {
     Q_OBJECT
 
 public:
     // Constructors
-    WaveFile(){};
+    WaveFile(){}
     WaveFile(const QString& name);
     ~WaveFile();
     //Reading Samples
     qint64 readData(double *buffer, int bufferSize, int channelId);
     qint64 readData(double *buffer, int bufferSize, qint64 offset, int channelId);
     //Auto detecting Markers
-    void detectBeeps(QVector<Markers> *markers, int channelId = 0);   
+    void detectBeeps(const DetectionParams *params, QVector<Markers> *markers, int channelId = 0);
     //Returning frequency
     int frequency() const { return file.header.wave.sampleRate * 0.5; }
     //Returning number of samples in file

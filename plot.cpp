@@ -88,9 +88,6 @@ bool Plot::openFile(QString filePath)
         resetPlot(); // reset all settings
         delete file;
     }
-    FFT::FFT fft(settings->FFT_bufferSize(), settings->FFT_window());
-    qDebug() << "Plot::openFile: FFT object created";
-    qDebug() << "Plot::openFile: FFT buffer size:" << fft.bufferSize();
     //setting temp file
     tempFile.setAutoRemove(false);
     QString tempFilePath = QDir::tempPath() + QDir::separator() + filePath.split('/').last();
@@ -117,7 +114,7 @@ bool Plot::openFile(QString filePath)
         tempStream >> tempFileHeight >> tempFileWidth >> tempFileWindowFFT; //reading header form file
     else
         qDebug() << "Plot::openFile -- temp file read error or file not exists";
-    if (halfFFTBufferSize != tempFileHeight || maxFFToffset != tempFileWidth || static_cast<int> (fft.windowType()) != tempFileWindowFFT) // checking if temp file need to be regenerated
+    if (halfFFTBufferSize != tempFileHeight || maxFFToffset != tempFileWidth || static_cast<int> (settings->FFT_window()) != tempFileWindowFFT) // checking if temp file need to be regenerated
     {
         plotReadyToPaint = false;
         qDebug() << "Plot::openFile -- generating new FFT this may take a while, please wait...";
@@ -127,7 +124,7 @@ bool Plot::openFile(QString filePath)
         if (!tempFile.open() || !tempFile.seek(0)) //creating new one
             return false;
         tempStream.setDevice(&tempFile);
-        tempStream << halfFFTBufferSize << maxFFToffset << static_cast<int> (fft.windowType()); // saving new header to temp file
+        tempStream << halfFFTBufferSize << maxFFToffset << static_cast<int> (settings->FFT_window()); // saving new header to temp file
         progressDialog = new ProgressDialog(tr("Counting FFT..."),this);
         connect(progressDialog, SIGNAL(progressAborted()), this, SLOT(killFFT()));
         progressBar = progressDialog->progressBar();
@@ -516,8 +513,13 @@ inline void Plot::moveGenerate()
 
 void Plot::detectBeeps(int channelId)
 {
-    if(file)
-        file->detectBeeps(&markerList,channelId);
+    if(!file)
+        return;
+    DetectionParams params;
+    params.beepThreshold = settings->beepThreshold();
+    params.period = settings->beepPeriod();
+    params.maxPausePeriods = settings->maxBeepPausePeriods();
+    file->detectBeeps(&params,&markerList,channelId);
     this->update();
 }
 

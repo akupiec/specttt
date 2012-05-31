@@ -9,6 +9,7 @@ class ConfigDialog;
 class ColorsWidget;
 class PlotWidget;
 class FFTWidget;
+class DetectWidget;
 class Settings;
 
 class ConfigDialog : public QDialog
@@ -29,6 +30,7 @@ private:
     ColorsWidget *colorsWidget;
     PlotWidget *plotWidget;
     FFTWidget *fftWidget;
+    DetectWidget *detectWidget;
     QWidgetList widgetList;
     Settings *settings;
     static bool fileSettingsChanged;

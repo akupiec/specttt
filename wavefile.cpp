@@ -102,7 +102,7 @@ qint64 WaveFile::readData(double *buffer, int bufferSize, qint64 offset, int cha
     return -1;
 }
 
-void WaveFile::detectBeeps(QVector<Markers> *markers, int channelId)
+void WaveFile::detectBeeps(const DetectionParams *params, QVector<Markers> *markers, int channelId)
 {
     if (!seek(posDataBeg()))
     {
@@ -110,11 +110,11 @@ void WaveFile::detectBeeps(QVector<Markers> *markers, int channelId)
         return;
     }
     // detection variables
-    const quint16 bufferSize = file.header.wave.sampleRate / 10;
-    const qreal beepThreshold = 0.04;
+    const quint16 bufferSize = file.header.wave.sampleRate * params->period / 1000;
     double buffer[bufferSize];
-    quint32 buffersCount = samples() / bufferSize + 1;
+    const quint32 buffersCount = samples() / bufferSize + 1;
     qint64 readedData;
+    quint8 pauseTakes;
     bool beepTakes = false;
     double avgAmplitude;
     double seconds;
@@ -135,13 +135,19 @@ void WaveFile::detectBeeps(QVector<Markers> *markers, int channelId)
         }
         avgAmplitude /= bufferSize;
         avgAmplitude = sqrt(avgAmplitude);
-        if (beepTakes && avgAmplitude < beepThreshold) { // end of signal
-            beepTakes = false;
-            qDebug() << "Beep starts on" << seconds << "seconds, stops on" << (double) i * bufferSize / file.header.wave.sampleRate << "seconds";
-            markers->append(Markers(beginBuffer*file.header.wave.blockAlign,i*bufferSize*file.header.wave.blockAlign,"Detected"));
+        if (beepTakes && avgAmplitude < params->beepThreshold) { // end of signal
+            if (pauseTakes < params->maxPausePeriods)
+                pauseTakes++;
+            else
+            {
+                beepTakes = false;
+                qDebug() << "Beep starts on" << seconds << "seconds, stops on" << (double) (i-pauseTakes) * bufferSize / file.header.wave.sampleRate << "seconds";
+                markers->append(Markers(beginBuffer*file.header.wave.blockAlign,i*bufferSize*file.header.wave.blockAlign,"Detected"));
+            }
         }
-        else if (!beepTakes && avgAmplitude > beepThreshold) { // origin of signal
+        else if (!beepTakes && avgAmplitude > params->beepThreshold) { // origin of signal
             beepTakes = true;
+            pauseTakes = 0;
             beginBuffer = i*bufferSize;
             seconds = (double) i * bufferSize / file.header.wave.sampleRate;
         }

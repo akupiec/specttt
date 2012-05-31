@@ -15,6 +15,7 @@ Settings::~Settings()
     saveColors();
     savePlotSettings();
     saveFFTSettings();
+    saveDetectSettings();
 }
 
 void Settings::init()
@@ -23,6 +24,7 @@ void Settings::init()
     setColors();
     readPlotSettings();
     readFFTSettings();
+    readDetectSettings();
 }
 
 void Settings::setColors()
@@ -92,5 +94,23 @@ void Settings::saveFFTSettings()
     setValue("bufferSize", bufferSize);
     setValue("window", static_cast<int> (windowFFT));
     setValue("dense", denseFFT);
+    endGroup();
+}
+
+void Settings::readDetectSettings()
+{
+    beginGroup("Detect");
+    minAmplitude = value("minAmplitude", 0.04f).toFloat();
+    beepPeriod_ = value("period", 100).toInt();
+    maxBeepPause = value("maxPause", 0).toInt();
+    endGroup();
+}
+
+void Settings::saveDetectSettings()
+{
+    beginGroup("Detect");
+    setValue("minAmplitude", minAmplitude);
+    setValue("period", beepPeriod_);
+    setValue("maxPause", maxBeepPause);
     endGroup();
 }

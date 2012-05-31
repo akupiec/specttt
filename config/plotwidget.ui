@@ -30,7 +30,7 @@
       <item row="2" column="0">
        <widget class="QLabel" name="gridVerticalSpaceLabel">
         <property name="text">
-         <string>Grid vertical spacing</string>
+         <string>Grid vertical count</string>
         </property>
        </widget>
       </item>
@@ -47,7 +47,7 @@
       <item row="3" column="0">
        <widget class="QLabel" name="gridHorizontalSpaceLabel">
         <property name="text">
-         <string>Grid horizontal spacing</string>
+         <string>Grid horizontal count</string>
         </property>
        </widget>
       </item>
@@ -112,7 +112,7 @@
       <item row="1" column="0">
        <widget class="QCheckBox" name="gridVisibilityCheckBox">
         <property name="text">
-         <string>Show Grind</string>
+         <string>Show Grid</string>
         </property>
        </widget>
       </item>

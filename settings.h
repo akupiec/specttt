@@ -12,17 +12,23 @@ class Settings : public QSettings
 public:
     Settings(const QString &fileName, Format format, QObject *parent = 0);
     ~Settings();
-    // colors
+    // settings read/write methods
+    // * colors
     void setColors();
     void saveColors();
-    QVector<QRgb> *colors() { return &rgbVector; }
-    // plot
+    // * plot
     void readPlotSettings();
     void savePlotSettings();
-    // FFT
+    // * FFT
     void readFFTSettings();
     void saveFFTSettings();
-    // fields access
+    // * detect
+    void readDetectSettings();
+    void saveDetectSettings();
+    // field access
+    // * colors
+    QVector<QRgb> *colors() { return &rgbVector; }
+    // * plot
     int plotFrameWidth() const { return frameWidth; }
     void setPlotFrameWidth(int v) { frameWidth = v; }
     int plotGridVerticalCount() const { return gridVerticalCount; }
@@ -35,6 +41,7 @@ public:
     void setPlotImageGeneratorBuffer(int v) { generateImgBuffer = v; }
     float plotZoomX() const { return imgZoom; }
     void setPlotZoomX(float v) { imgZoom = v; }
+    // * FFT
     bool clearTempDir() const { return clearTmp; }
     void setClearTempDir(bool v) { clearTmp = v; }
     quint16 FFT_bufferSize() const { return bufferSize; }
@@ -43,6 +50,13 @@ public:
     void setFFT_window(FFT::Window v) { windowFFT = v; }
     int FFT_dense() const { return denseFFT; }
     void setFFT_dense(int v) { denseFFT = v; }
+    // * detect
+    float beepThreshold() const { return minAmplitude; }
+    void setBeepThreshold(float v) { minAmplitude = v; }
+    quint16 beepPeriod() const { return beepPeriod_; }
+    void setBeepPeriod(quint16 v) { beepPeriod_ = v; }
+    quint8 maxBeepPausePeriods() const { return maxBeepPause; }
+    void setMaxBeepPausePeriods(quint8 v) { maxBeepPause = v; }
 
 private:
     void init();
@@ -60,6 +74,10 @@ private:
     quint16 bufferSize;
     FFT::Window windowFFT;
     int denseFFT;
+    // detect
+    float minAmplitude;
+    quint16 beepPeriod_;
+    quint8 maxBeepPause;
 
 signals:
 
