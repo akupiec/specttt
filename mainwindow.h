@@ -44,6 +44,8 @@ private slots:
 
     void on_buttonMarkerDelete_clicked();
 
+    void on_horizontalScrollBar_sliderReleased();
+
 private:
     //ui parametrs
     Ui::MainWindow *ui;

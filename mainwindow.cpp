@@ -163,3 +163,8 @@ void MainWindow::on_buttonMarkerDelete_clicked()
     ui->plot->delMarker(index); // deleting selected row form Marker List Vector
     ui->plot->selectMarker(ui->tableWidget->currentRow()); // selecting next marker and refreshing plot
 }
+
+void MainWindow::on_horizontalScrollBar_sliderReleased()
+{
+    ui->plot->refreshPlot();
+}

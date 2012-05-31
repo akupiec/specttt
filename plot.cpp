@@ -1,5 +1,13 @@
 #include "plot.h"
 
+#ifdef Q_OS_WIN32
+#include <windows.h>
+void msleep(uint ms) { Sleep(ms); }
+#else
+#include <unistd.h>
+void msleep(uint ms) { usleep(1000*ms); }
+#endif
+
 #define SPECT_PROJECT_NAME "Spect2.ini"
 
 Plot::Plot(QWidget *parent) :
@@ -134,9 +142,11 @@ bool Plot::openFile(QString filePath)
 void Plot::imageGenerated()
 {
     if(generator0->isFinished() && generator1->isFinished())
-        qDebug() << "TO JEST SKUKCES";
+        qDebug() << "TO JEST SKUKCES" << generator0->isRunning() << generator1->isRunning();
     else
         qDebug() << "___";
+    if(generator0->isRunning() || generator1->isRunning())
+        qDebug() << "NO MO¯E JEDNAK NIE....";
     this->update();
 }
 
@@ -235,8 +245,8 @@ void Plot::refreshPlot()
     img_realWidth = this->width()-AX_Y_DESC_SPACE-frameWidth+generateImgBuffor;
 
     //waitnig ultil generations are finished
-    while(generator0 && generator0->isRunning()) continue;
-    while(generator1 && generator1->isRunning()) continue;
+    while(generator0 && generator0->isRunning()) msleep(6);
+    while(generator1 && generator1->isRunning()) msleep(6);
 
     // changing curentyly painting
     last_generated_offset = -1;
@@ -250,14 +260,15 @@ void Plot::refreshPlot()
     //genereate curentyly painting img
     generate(img_nr,img_offset/img_realWidth);
 
-    while(generator0 && generator0->isRunning()) continue; //check again need to be finished before generating next img
+    while(generator0 && generator0->isRunning()) msleep(6); //check again need to be finished before generating next img
+    while(generator1 && generator1->isRunning()) msleep(6);
     // genereting NEXT img to img0 or img1 depends on curently painted
     if(img_offset % img_realWidth > generateImgBuffor/2)
     {
         offset = (img_offset/img_realWidth)+1;
         if(offset != last_generated_offset)
         {
-            //qDebug() << "generacja do przodu: " << offset <<", w:"<< !img_nr << "gdzie jest:" << offset-1 << img_nr;
+            qDebug() << "generacja do przodu: " << offset <<", w:"<< !img_nr << "gdzie jest:" << offset-1 << img_nr;
             generate(!img_nr,offset);
         }
     }
@@ -269,7 +280,7 @@ void Plot::refreshPlot()
         if(offset < 0) offset =0;
         if(offset != last_generated_offset)
         {
-           // qDebug() << "generacja wsteczna: " << offset <<", w:"<< !img_nr << "gdzie jest:" << offset+1 << img_nr;
+            qDebug() << "generacja wsteczna: " << offset <<", w:"<< !img_nr << "gdzie jest:" << offset+1 << img_nr;
             generate(!img_nr,offset);
         }
     }
@@ -298,13 +309,17 @@ inline void Plot::generate(bool nr, int offset)
             delete img0; img0 = 0; //deleting old img
             img0 = generator0->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom); // generating new one
             last_generated_offset = offset;
+            qDebug() << 0;
         }
         else if(!generator1->isRunning() && !generator0->isRunning())
         {
             delete img1; img1 =0;
             img1 = generator1->plotImage(offset*(img_realWidth/imgZoom),(offset+1)*img_realWidth/imgZoom);
             last_generated_offset = offset;
+             qDebug() << 1;
         }
+        else
+            qDebug() << "error";
     }
 }
 
