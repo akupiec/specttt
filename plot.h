@@ -23,7 +23,7 @@
 
 class Settings;
 class QProgressBar;
-class QLabel;
+class ProgressDialog;
 
 #define AX_X_DESC_SPACE 30
 #define AX_Y_DESC_SPACE 60
@@ -73,6 +73,7 @@ private slots:
     void setImgOffset(int); // connected to horizontal scroll bar for setting imr_offset
     void imageGenerated(); // finished generation of new img
     void addMarker(); // adding new marker to plot
+    void killFFT(); // kills FFT counter thread
 
 private:
     // Useable width of plot
@@ -90,9 +91,9 @@ private:
     quint32 offsetFFTToOffsetFile(int offset) {return offset /(file->maxOffset()/maxFFToffset);}
 
     // FFT counting progress bar window
-    QWidget *progressWindow;
+    ProgressDialog *progressDialog;
     QProgressBar *progressBar;
-    QLabel *progressLabel;
+    TempFileGenerator *tempFileGenerator;
 
     //Painting
     virtual void paintEvent(QPaintEvent *);

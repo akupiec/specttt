@@ -12,6 +12,7 @@ class TempFileGenerator : public QThread
     Q_OBJECT
 public:
     TempFileGenerator(WaveFile *file, QFile *tempFile, uint16 halfBufferSizeFFT, FFT::Window windowFFT, quint16 bufferGraduationFFT, int maxOffsetFFT, QObject *parent = 0);
+    void stop();
 
 protected:
     void run();
@@ -29,6 +30,7 @@ private:
     quint16 halfBufferSize;
     quint16 bufferGraduation;
     int maxOffset;
+    bool work;
 };
 
 #endif // TEMPFILEGENERATOR_H

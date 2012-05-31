@@ -15,6 +15,12 @@ TempFileGenerator::TempFileGenerator(WaveFile *file, QFile *tempFile, uint16 hal
     this->maxOffset = maxOffsetFFT;
 }
 
+void TempFileGenerator::stop()
+{
+    work = false;
+    while (isRunning()) ;
+}
+
 void TempFileGenerator::run()
 {
     if (!fileFFT->isOpen() || !fileFFT->isWritable())
@@ -23,6 +29,7 @@ void TempFileGenerator::run()
     tempStream.setVersion(QDataStream::Qt_4_6);
     FFT::FFT fft(2*halfBufferSize,windowFFT);
     double *buffer = new double[fft.bufferSize()];
+    work = true;
     for (int i=0; i<maxOffset; i++) //lenght of file loop
     {
         file->readData(buffer,fft.bufferSize(),i*bufferGraduation,0);
@@ -35,6 +42,8 @@ void TempFileGenerator::run()
             else
                 tempStream << static_cast<uchar> (255);
         }
+        if (!work)
+            break;
         emit currentOffsetChanged(i);
     }
     delete buffer;

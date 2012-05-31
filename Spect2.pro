@@ -23,7 +23,8 @@ SOURCES += main.cpp\
     configdialog.cpp \
     config/plotwidget.cpp \
     config/fftwidget.cpp \
-    tempfilegenerator.cpp
+    tempfilegenerator.cpp \
+    progressdialog.cpp
 
 HEADERS  += mainwindow.h \
     wavefile.h \
@@ -37,13 +38,15 @@ HEADERS  += mainwindow.h \
     configdialog.h \
     config/plotwidget.h \
     config/fftwidget.h \
-    tempfilegenerator.h
+    tempfilegenerator.h \
+    progressdialog.h
 
 FORMS    += mainwindow.ui \
     config/colorswidget.ui \
     configdialog.ui \
     config/plotwidget.ui \
-    config/fftwidget.ui
+    config/fftwidget.ui \
+    progressdialog.ui
 
 OTHER_FILES +=
 
