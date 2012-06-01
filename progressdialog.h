@@ -9,7 +9,7 @@ class ProgressDialog;
 }
 class ProgressMessageBox;
 
-class ProgressDialog : public QProgressDialog
+class ProgressDialog : public QDialog
 {
     Q_OBJECT
 
