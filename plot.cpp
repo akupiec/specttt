@@ -294,22 +294,21 @@ void Plot::paintEvent(QPaintEvent *)
     //Horizontal
     double gridHorizontalSpace = (this->height()-AX_X_DESC_SPACE-frameWidth)/(double)(gridHorizontalCount-1);
     offset = this->height()-AX_X_DESC_SPACE-1;
-    int frequencyGrindOffset =0; // frequensy per grind line
+    double frequencyGrindOffset = 0; // frequensy per grind line
     // depends on img height so it have to check both img0 and img1 to protect dividing by 0
-    if (file != 0 && img0 && !img0->isNull())
-        frequencyGrindOffset = gridHorizontalSpace*file->frequency()/img0->height();
-    if (file != 0 && img1 && !img1->isNull())
-        frequencyGrindOffset = gridHorizontalSpace*file->frequency()/img1->height();
-    for (int i=0;i<gridHorizontalCount;i++) // painting loop
+    if (file != 0)
     {
-        if(offset < frameWidth) offset = frameWidth; //first (last in loop) from top line
-        if(gridVisibility) painter.drawLine(frameWidth,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
-        else painter.drawLine(this->width()-AX_Y_DESC_SPACE+frameWidth-2,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
-        value.setNum(i*frequencyGrindOffset);
-        painter.drawText(this->width()-AX_Y_DESC_SPACE+15,offset+8,value);
-        offset -= gridHorizontalSpace;
+        frequencyGrindOffset = file->frequency()/(gridHorizontalCount-1);
+        for (int i=0;i<gridHorizontalCount;i++) // painting loop
+        {
+            if(offset < frameWidth) offset = frameWidth; //first (last in loop) from top line
+            if(gridVisibility) painter.drawLine(frameWidth,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
+            else painter.drawLine(this->width()-AX_Y_DESC_SPACE+frameWidth-2,offset,this->width()-AX_Y_DESC_SPACE+frameWidth+2,offset);
+            value.setNum(i*frequencyGrindOffset);
+            painter.drawText(this->width()-AX_Y_DESC_SPACE+15,offset+8,value);
+            offset -= gridHorizontalSpace;
+        }
     }
-
     painter.end();
 }
 
