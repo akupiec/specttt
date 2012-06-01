@@ -292,7 +292,6 @@ void Plot::paintEvent(QPaintEvent *)
         painter.drawText(offset,this->height()-AX_X_DESC_SPACE+frameWidth+15,value);
     }
     //Horizontal
-    gridHorizontalCount = 10;
     double gridHorizontalSpace = (this->height()-AX_X_DESC_SPACE-frameWidth)/(double)(gridHorizontalCount-1);
     offset = this->height()-AX_X_DESC_SPACE-1;
     int frequencyGrindOffset =0; // frequensy per grind line

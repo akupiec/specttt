@@ -55,7 +55,7 @@
               <number>0</number>
              </property>
              <property name="minimum">
-              <double>50.000000000000000</double>
+              <double>10.000000000000000</double>
              </property>
              <property name="maximum">
               <double>1000.000000000000000</double>
@@ -234,7 +234,7 @@
      <x>0</x>
      <y>0</y>
      <width>862</width>
-     <height>24</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuTest">
