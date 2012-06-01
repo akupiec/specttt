@@ -316,15 +316,51 @@ void Plot::paintEvent(QPaintEvent *)
 void Plot::refreshPlot()
 {
     img_realWidth = this->width()-AX_Y_DESC_SPACE-frameWidth+generateImgBuffer;
-    //after resize set evrithing to 0
-    img_nr = 0;
-    img_offset = 0;
-    if(generator0 && generator0->isFinished())
-        generate(img_nr,0);
-    //emitning new parametrs
-    setMaxImgOffset();
-    emit MaximumOffset(max_img_offset);
-    emit ImgOffset(img_offset);
+    //waitnig ultil generations are finished
+        while(generator0 && generator0->isRunning()) msleep(6);
+        while(generator1 && generator1->isRunning()) msleep(6);
+
+        // changing curentyly painting
+        last_generated_offset = -1;
+        if((img_offset/img_realWidth)%2 == 0  && img_offset > 0)
+            img_nr = 0;
+        else
+            img_nr = 1;
+        if(img_offset == 0) img_nr = 0;
+
+        int offset;
+        //genereate curentyly painting img
+        generate(img_nr,img_offset/img_realWidth);
+
+        while(generator0 && generator0->isRunning()) msleep(6); //check again need to be finished before generating next img
+        while(generator1 && generator1->isRunning()) msleep(6);
+        // genereting NEXT img to img0 or img1 depends on curently painted
+        if(img_offset % img_realWidth > generateImgBuffer/2)
+        {
+            offset = (img_offset/img_realWidth)+1;
+            if(offset != last_generated_offset)
+            {
+                qDebug() << "generacja do przodu: " << offset <<", w:"<< !img_nr << "gdzie jest:" << offset-1 << img_nr;
+                generate(!img_nr,offset);
+            }
+        }
+
+        // generating PREVIOUS img
+        else
+        {
+            int offset = (img_offset/img_realWidth)-1;
+            if(offset < 0) offset =0;
+            if(offset != last_generated_offset)
+            {
+                qDebug() << "generacja wsteczna: " << offset <<", w:"<< !img_nr << "gdzie jest:" << offset+1 << img_nr;
+                generate(!img_nr,offset);
+            }
+        }
+
+        //emitning new parametrs
+        setMaxImgOffset();
+        emit MaximumOffset(max_img_offset);
+        emit ImgOffset(img_offset);
 }
 
 void Plot::resizeEvent(QResizeEvent *)
@@ -530,7 +566,15 @@ void Plot::splitFile()
 
 void Plot::setZoom(float zoom)
 {
-    imgZoom = zoom;
+    if(img_offset)
+    {
+        img_offset = offsetFFTToOffsetFile(img_offset);
+        imgZoom = zoom;
+        img_offset = offsetFileToOffsetFFT(img_offset);
+    }
+    else
+        imgZoom = zoom;
+
     if (!generator0 || !file)
         return;
     qDebug() << "Plot::setZoom (in status bar) -- waiting until generation finished";

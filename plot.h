@@ -87,8 +87,8 @@ private:
 
     //FFTFile
     int maxFFToffset;
-    int offsetFileToOffsetFFT(quint32 offset) {return offset *((double)maxFFToffset/file->maxOffset());}
-    quint32 offsetFFTToOffsetFile(int offset) {return offset /(file->maxOffset()/maxFFToffset);}
+    int offsetFileToOffsetFFT(quint32 offset) {return (offset*imgZoom) *((double)maxFFToffset/file->maxOffset());}
+    quint32 offsetFFTToOffsetFile(int offset) {return (offset/imgZoom) *((double)file->maxOffset()/maxFFToffset);}
 
     // FFT counting progress bar window
     ProgressDialog *progressDialog;
