@@ -80,7 +80,7 @@ void Settings::savePlotSettings()
 void Settings::readFFTSettings()
 {
     beginGroup("FFT");
-    clearTmp = value("clarTempDir", true).toBool();
+    clearTmp = value("clearTempDir", true).toBool();
     bufferSize = value("bufferSize", 512).toInt();
     windowFFT = static_cast<FFT::Window> (value("window", static_cast<int> (FFT::Hann)).toInt());
     denseFFT = value("dense", 1).toInt();
