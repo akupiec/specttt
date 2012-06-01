@@ -6,7 +6,7 @@
 // ProgressDialog
 
 ProgressDialog::ProgressDialog(const QString &title, QWidget *parent) :
-    QProgressDialog(parent),
+    QDialog(parent),
     ui(new Ui::ProgressDialog)
 {
     ui->setupUi(this);
@@ -34,8 +34,6 @@ void ProgressDialog::setETA(int seconds)
     int d = h / 24;
     h -= d * 24;
     m -= h * 60;
-    s -= m * 60;
-//    qDebug() << d << h << m << s;
     if (m < 1)
         str += QString::number(s) + sec + '.';
     else if (m < 5)
