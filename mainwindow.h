@@ -48,7 +48,6 @@ private slots:
 private:
     //ui parametrs
     Ui::MainWindow *ui;
-    bool allowEditingCells;
 
     //file
     QString filePath;

@@ -105,12 +105,11 @@ void MainWindow::on_actionMark_detect_triggered()
         ui->tableWidget->setItem(i,0,item); // adding item to table
     }
     ui->tableWidget->update(); // update table
-    allowEditingCells = true; // ? it was needed for some reason
 }
 
 void MainWindow::on_tableWidget_cellChanged(int row, int column)
 {
-    if(allowEditingCells && column == 0)
+    if(row > -1 && row < ui->plot->markerList.count())
         ui->plot->markerList[row].setLabel(ui->tableWidget->item(row,column)->text());
 }
 
@@ -156,7 +155,6 @@ void MainWindow::tableWidget_update(int index)
 
 void MainWindow::on_buttonMarkerDelete_clicked()
 {
-    allowEditingCells = true; // ? it was needed for some reason
     int index = ui->tableWidget->currentRow(); // taking index of curent selected row
     ui->tableWidget->clearSelection(); // clearing sellection (nessesery for removing row)
     QTableWidgetItem *item = ui->tableWidget->item(ui->tableWidget->currentRow(),0); // taking pointer of item to delete it
